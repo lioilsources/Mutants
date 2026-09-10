@@ -12,3 +12,10 @@ executables:
 dev_dependencies:
   lints: ^6.0.0
   test: ^1.26.0
+
+# Bundled into the Flutter app as packages/mutant_core/assets/… so the engine
+# and the UI read the same card definitions. Ignored by the Dart CLI.
+flutter:
+  assets:
+    - assets/cards.json
+    - assets/names.json

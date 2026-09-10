@@ -1,0 +1,28 @@
+name: mutant
+description: "Mutant – kooperativní karetní hra pro děti (Fáze 1)"
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  mutant_core:
+    path: ../mutant_core
+  # Bestiary JSON lives in the app documents directory.
+  path_provider: ^2.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  fonts:
+    # Fredoka (SIL OFL 1.1, assets/fonts/OFL.txt) – variable weight axis.
+    - family: Fredoka
+      fonts:
+        - asset: assets/fonts/Fredoka-Variable.ttf

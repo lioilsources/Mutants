@@ -173,10 +173,10 @@ odhaduje a animuje optimisticky; deterministický seed + log commandů.
 - [x] KidBot profily, CLI sim, kalibrace `drainPerSec`
 
 **Fáze 1 – feel, placeholder vizuál**
-- [ ] silueta se sloty (barevné obdélníky + text), inkubátor bar, kotlík
-- [ ] swipe-to-slot, swipe-to-pass, catch tap, fúze animace (placeholder)
-- [ ] líhnutí → karta mutanta (text) → bestiář JSON
-- [ ] puppet mode + DebugPanel + scénáře (přes cardkit)
+- [x] silueta se sloty (barevné obdélníky + text), inkubátor bar, kotlík
+- [x] swipe-to-slot, swipe-to-pass, catch tap, fúze animace (placeholder)
+- [x] líhnutí → karta mutanta (text) → bestiář JSON
+- [x] puppet mode + DebugPanel + scénáře (přes cardkit)
 - ✅ Výstup: drain rychlost, okno chycení, zda cooldown předání sedí, první test s dítětem
 
 **Fáze 2 – paper-doll a vizuál** (samostatný plán)
