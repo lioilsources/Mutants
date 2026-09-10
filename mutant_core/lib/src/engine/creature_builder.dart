@@ -39,7 +39,9 @@ CreatureRecord buildCreatureRecord(
       parts: partsInSlotOrder,
       stumps: Slot.values.length - silhouette.slots.length,
       fusions: silhouette.fusions,
-      mutations: silhouette.mutations,
+      mutations: state.rules.mutationBonusNeedsOverwrite
+          ? silhouette.mutationOverwrites
+          : silhouette.mutations,
       hazardsMet: silhouette.hazardsMet,
       synchroThrows: silhouette.synchroThrows,
       premature: premature,

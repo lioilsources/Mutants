@@ -27,12 +27,24 @@ Rules (start from --rules, then override):
   --max-hand N         a timed deal to a full hand swaps a useless card
   --drain X            starting drainPerSec
   --drain-per-hatch X  drain growth per hatched creature
+  --chaos N            rarity chaos +1 per N distinct origins
+  --mutation-overwrite BOOL
+                       rarity mutation bonus only when a slot was overwritten
 
-  --sweep KEY=a,b,c    run once per value of a rule (drain, drain-per-hatch,
-                       deal, hand, max-hand) and print a table
+  --sweep KEY=a,b,c    run once per value of any rule above (name without
+                       dashes, e.g. deal=4000,6000 or chaos=3,5) and print a table
 ''';
 
-const _ruleKeys = ['hand', 'refill', 'deal', 'max-hand', 'drain', 'drain-per-hatch'];
+const _ruleKeys = [
+  'hand',
+  'refill',
+  'deal',
+  'max-hand',
+  'drain',
+  'drain-per-hatch',
+  'chaos',
+  'mutation-overwrite',
+];
 
 void main(List<String> arguments) {
   try {
@@ -109,13 +121,20 @@ void _run(List<String> arguments) {
 
 RulesConfig _withRule(RulesConfig r, String key, String value) => switch (key) {
   'hand' => r.copyWith(handSize: int.parse(value)),
-  'refill' => r.copyWith(refillOnPlay: value == 'true'),
+  'refill' => r.copyWith(refillOnPlay: _parseBool(value)),
   'deal' => r.copyWith(dealIntervalMs: int.parse(value)),
   'max-hand' => r.copyWith(maxHandSize: int.parse(value)),
   'drain' => r.copyWith(drainPerSec: double.parse(value)),
   'drain-per-hatch' => r.copyWith(drainPerHatch: double.parse(value)),
   'chaos' => r.copyWith(chaosOriginsPerPoint: int.parse(value)),
+  'mutation-overwrite' => r.copyWith(mutationBonusNeedsOverwrite: _parseBool(value)),
   _ => throw FormatException('Unknown rule "$key"'),
+};
+
+bool _parseBool(String value) => switch (value) {
+  'true' => true,
+  'false' => false,
+  _ => throw FormatException('Expected true or false, got "$value"'),
 };
 
 Map<String, String> _parseArgs(List<String> arguments) {
@@ -218,15 +237,15 @@ void _printSweep(
   SimOptions Function(String value) optionsFor,
 ) {
   stdout.writeln(
-    '\n ${key.padLeft(15)} │ median │ premature │ rare+  │ hazards met │ synchro/creature',
+    '\n ${key.padLeft(18)} │ median │ premature │ rare+  │ hazards met │ synchro/creature',
   );
-  stdout.writeln('${'─' * 17}┼────────┼───────────┼────────┼─────────────┼─────────────────');
+  stdout.writeln('${'─' * 20}┼────────┼───────────┼────────┼─────────────┼─────────────────');
   for (final value in values) {
     final r = runSimulation(engine, optionsFor(value));
     final median = percentile(r.durationsMs(), 0.5);
     final n = r.count == 0 ? 1 : r.count;
     stdout.writeln(
-      ' ${value.trim().padLeft(15)} │ ${_sec(median).padLeft(6)} │'
+      ' ${value.trim().padLeft(18)} │ ${_sec(median).padLeft(6)} │'
       ' ${_pct(r.prematureRate).padLeft(9)} │ ${_pct(r.rarePlusRate).padLeft(6)} │'
       ' ${_pct(r.hazardMetRate).padLeft(11)} │ ${(r.synchroPlacements / n).toStringAsFixed(2).padLeft(8)}',
     );

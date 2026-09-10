@@ -14,7 +14,7 @@ dart run mutant_core:sim --profiles careful,passer --reaction-scale 3
 ```
 
 Klíče pro `--sweep KEY=a,b,c` i samostatné přepínače: `hand`, `refill`, `deal`, `max-hand`,
-`drain`, `drain-per-hatch` (a `chaos` jen ve sweepu).
+`drain`, `drain-per-hatch`, `chaos`, `mutation-overwrite`.
 
 ## Struktura
 
@@ -49,19 +49,21 @@ S pravidly v1 byl tvor hotový za ~2,4 s místo 60–90 s: ruce po 5 kartách s 
 | `drainPerSec` | 4 | 0,85 |
 | drain za vylíhnutého mutanta | +0,5 | +0,2 |
 | chaos (rarita) | +1 za 3 původy | +1 za 5 původů |
+| bonus za Mutaci (rarita) | za jakoukoli mutaci | jen když přepíše obsazený slot |
 
-Výsledek se 3 profily botů (seed 1, 200 mutantů, sezení po 5):
+Výsledek se 3 profily botů (seed 1, 400 mutantů, sezení po 5):
 
 | hráči | medián na mutanta | předčasně | vzácný+ |
 |---|---|---|---|
-| 2 | 53,9 s | 10 % | 40 % |
-| 3 | 66,3 s | 7,5 % | 47,5 % |
-| 4 | 71,9 s | 20 % | 43 % |
-| 5 | 55,3 s | 8 % | 48,5 % |
+| 2 | 54,2 s | 8,5 % | 34,5 % |
+| 3 | 66,7 s | 7 % | 40,8 % |
+| 4 | 68,9 s | 18,8 % | 38,3 % |
+| 5 | 58,9 s | 8 % | 40,5 % |
 | **cíl** | **60–90 s** | **< 25 %** | **~30 %** |
 
-**Otevřené:** vzácný+ je pořád nad cílem. Zbytek dělá hlavně bonus za Mutaci (+1 asi u 70 %
-tvorů); jeho oslabení by měnilo pravidlo z plánu, ne jen číslo.
+**Otevřené:** vzácný+ je pořád o 5–11 bodů nad cílem. Bonus za Mutaci i po změně padá
+u 53–56 % tvorů (dřív 68–77 %), protože se mutace hrají většinou až do obsazených slotů.
+Chaos zpátky na 3 původy nejde (vzácný+ 59–66 %). Další páky by opět měnily pravidla z plánu.
 
 ## Výklad pravidel
 
@@ -101,7 +103,9 @@ Místa, kde plán nechává prostor, a jak jsou teď implementovaná. Vše je sn
 **Rarita, jméno, záznam**
 - Chaos = počet různých původů ÷ `chaosOriginsPerPoint` (dolů); soulad jen u kompletního tvora;
   bere se vyšší.
-- Fúze a Mutace +1 jednou bez ohledu na počet; každá splněná Událost +1.
+- Fúze +1 jednou bez ohledu na počet. Mutace +1 jednou – ve výchozích pravidlech jen tehdy,
+  když přepsala obsazený slot (`mutationBonusNeedsOverwrite`), ve v1 za jakoukoli.
+  Každá splněná Událost +1.
 - Dominantní element: pečeť › nejčastější element › dřívější slot (hlava → extra).
 - Chybějící hlava/trup/element: `Šedo-Bezhlavo-bezbřichák`. Kolize jmen → římská číslice
   (`Pyro-Rexo-dračák II`), kontroluje se i proti bestiáři hostu (`GameConfig.takenNames`).

@@ -11,6 +11,7 @@ class RulesConfig {
     this.drainPerSec = 0.85,
     this.drainPerHatch = 0.2,
     this.chaosOriginsPerPoint = 5,
+    this.mutationBonusNeedsOverwrite = true,
     this.throwBonus = 10,
     this.synchroBonus = 25,
     this.catchBonus = 5,
@@ -33,6 +34,7 @@ class RulesConfig {
     drainPerSec: 4,
     drainPerHatch: 0.5,
     chaosOriginsPerPoint: 3,
+    mutationBonusNeedsOverwrite: false,
   );
 
   /// Cards dealt at the start (and the refill target when [refillOnPlay]).
@@ -57,6 +59,10 @@ class RulesConfig {
 
   /// Rarity chaos bonus: +1 per this many distinct origins.
   final int chaosOriginsPerPoint;
+
+  /// Rarity mutation bonus only when a mutation replaced an occupied slot
+  /// ("přepíše ho"). v1: any mutation on the creature counts.
+  final bool mutationBonusNeedsOverwrite;
 
   /// Platný hod do slotu.
   final double throwBonus;
@@ -86,6 +92,7 @@ class RulesConfig {
     double? drainPerSec,
     double? drainPerHatch,
     int? chaosOriginsPerPoint,
+    bool? mutationBonusNeedsOverwrite,
     double? throwBonus,
     double? synchroBonus,
     double? catchBonus,
@@ -106,6 +113,8 @@ class RulesConfig {
     drainPerSec: drainPerSec ?? this.drainPerSec,
     drainPerHatch: drainPerHatch ?? this.drainPerHatch,
     chaosOriginsPerPoint: chaosOriginsPerPoint ?? this.chaosOriginsPerPoint,
+    mutationBonusNeedsOverwrite:
+        mutationBonusNeedsOverwrite ?? this.mutationBonusNeedsOverwrite,
     throwBonus: throwBonus ?? this.throwBonus,
     synchroBonus: synchroBonus ?? this.synchroBonus,
     catchBonus: catchBonus ?? this.catchBonus,
@@ -124,7 +133,8 @@ class RulesConfig {
       ' · deal ${dealIntervalMs == 0 ? 'off' : '$dealIntervalMs ms'}'
       ' · max hand $maxHandSize'
       ' · drain $drainPerSec/s (+$drainPerHatch/hatch)'
-      ' · chaos per $chaosOriginsPerPoint origins';
+      ' · chaos per $chaosOriginsPerPoint origins'
+      ' · mutation bonus ${mutationBonusNeedsOverwrite ? 'on overwrite' : 'any'}';
 }
 
 class PlayerInfo {

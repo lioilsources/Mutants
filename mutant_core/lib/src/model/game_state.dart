@@ -57,6 +57,7 @@ class Silhouette {
     this.relays = 0,
     this.fusions = 0,
     this.mutations = 0,
+    this.mutationOverwrites = 0,
     this.hazardsMet = 0,
   }) : slots = slots ?? {},
        recentThrows = recentThrows ?? [],
@@ -72,7 +73,12 @@ class Silhouette {
   int synchroThrows;
   int relays;
   int fusions;
+
+  /// Mutation cards placed, into empty or occupied slots.
   int mutations;
+
+  /// Mutations that replaced an occupied slot.
+  int mutationOverwrites;
   int hazardsMet;
 
   bool get isComplete => slots.length == Slot.values.length;
@@ -98,6 +104,7 @@ class Silhouette {
     relays: relays,
     fusions: fusions,
     mutations: mutations,
+    mutationOverwrites: mutationOverwrites,
     hazardsMet: hazardsMet,
   );
 }

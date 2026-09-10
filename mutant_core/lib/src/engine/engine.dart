@@ -247,6 +247,7 @@ class MutantEngine {
           mutated: true,
         );
         silhouette.mutations++;
+        silhouette.mutationOverwrites++;
       case PlacementResult.seal:
         silhouette.seal = card;
       default:
