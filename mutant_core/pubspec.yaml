@@ -1,0 +1,14 @@
+name: mutant_core
+description: Herní logika pro Mutant – kooperativní skládací karetní hra (čistý Dart, bez Flutteru).
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.10.0
+
+executables:
+  sim: sim
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.26.0

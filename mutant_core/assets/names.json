@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "prefix": {"fire": "Pyro", "water": "Aqua", "ice": "Kryo", "lightning": "Volt", "plant": "Listo", "stone": "Skalo", "shadow": "Stíno"},
+  "root": {"dino": "Rexo", "insect": "Brouko", "marine": "Krako", "bird": "Pípo", "mammal": "Chlupo", "dragon": "Drako", "robot": "Robo"},
+  "suffix": {"dino": "saurus", "insect": "hmyzák", "marine": "ploutvák", "bird": "opeřenec", "mammal": "chlupáč", "dragon": "dračák", "robot": "robík"},
+  "stump": {"prefix": "Šedo", "root": "Bezhlavo", "suffix": "bezbřichák"},
+  "abilities": {
+    "fire": "Chrlí jiskřičky",
+    "water": "Umí dýchat pod vodou",
+    "ice": "Zamrazí každou kaluž",
+    "lightning": "Blýská očima",
+    "plant": "Kam šlápne, vyroste kytka",
+    "stone": "Pevný jako skála",
+    "shadow": "Umí se schovat do stínu"
+  },
+  "stumpAbility": "Zatím nic neumí, ale moc se snaží",
+  "rarity": ["běžný", "neobvyklý", "vzácný", "epický", "legendární", "mýtický"]
+}
