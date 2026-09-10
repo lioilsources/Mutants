@@ -112,6 +112,8 @@ class PlayerState {
        caughtAt = caughtAt ?? {};
 
   final int id;
+
+  /// In arrival order – the first card is the oldest.
   final List<int> hand;
   int? lastPassAt;
 
@@ -172,6 +174,7 @@ class GameState {
     this.incubatorFrozen = false,
     this.hazard,
     this.hatchedCount = 0,
+    this.nextDealAt,
   });
 
   final GameConfig config;
@@ -193,6 +196,9 @@ class GameState {
   double drainPerSec;
   ActiveHazard? hazard;
   int hatchedCount;
+
+  /// Next timed deal from the pot; null when dealing is off.
+  int? nextDealAt;
   final Set<String> takenNames;
 
   RulesConfig get rules => config.rules;
@@ -213,6 +219,7 @@ class GameState {
     drainPerSec: drainPerSec,
     hazard: hazard,
     hatchedCount: hatchedCount,
+    nextDealAt: nextDealAt,
     takenNames: Set.of(takenNames),
   );
 }

@@ -44,6 +44,14 @@ void main() {
     expect(rate(parts: mixed(6)).reasons, [const RarityReason('chaos', 2)]);
   });
 
+  test('chaos step is configurable', () {
+    RarityResult withStep(int distinctOrigins) => evaluateRarity(
+      RarityInput(parts: mixed(distinctOrigins), stumps: 0, chaosOriginsPerPoint: 5),
+    );
+    expect(withStep(4).raw, 0);
+    expect(withStep(5).raw, 1);
+  });
+
   test('harmony: +2 when all parts share one element', () {
     final parts = [for (var i = 0; i < 6; i++) part(ElementType.ice, Origin.bird)];
     expect(rate(parts: parts).reasons, [const RarityReason('harmony', 2)]);

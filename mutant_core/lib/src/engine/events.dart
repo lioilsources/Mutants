@@ -113,6 +113,14 @@ final class CardDrawn extends GameEvent {
   final int card;
 }
 
+/// The pot took a card that did not fit back from a full hand before dealing.
+final class CardReturned extends GameEvent {
+  const CardReturned(super.ts, {required this.player, required this.card});
+
+  final int player;
+  final int card;
+}
+
 final class HazardSurfaced extends GameEvent {
   const HazardSurfaced(super.ts, {required this.card, required this.defId, required this.expiresAt});
 

@@ -80,7 +80,7 @@ void main() {
   });
 
   test('hazards surface when drawn; a second one waits at the bottom', () {
-    final h = Harness(players: 1, rules: const RulesConfig(handSize: 1));
+    final h = Harness(players: 1, rules: RulesConfig.v1.copyWith(handSize: 1));
     final pot = h.state.pot;
     int take(String id) => pot.removeAt(pot.indexWhere((c) => h.state.defIdOf(c) == id));
     final flood = take('hazard_flood');

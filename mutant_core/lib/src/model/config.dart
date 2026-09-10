@@ -1,11 +1,16 @@
-/// Tunable numbers from PLAN §2. Defaults = rules v1.
+/// Tunable numbers from PLAN §2. Defaults = current recommended rules
+/// (calibrated with the CLI sim); [RulesConfig.v1] = the plan's originals.
 class RulesConfig {
   const RulesConfig({
-    this.handSize = 5,
+    this.handSize = 3,
+    this.refillOnPlay = false,
+    this.dealIntervalMs = 6000,
+    this.maxHandSize = 5,
     this.incubatorMax = 100,
     this.incubatorStart = 60,
-    this.drainPerSec = 4,
-    this.drainPerHatch = 0.5,
+    this.drainPerSec = 0.85,
+    this.drainPerHatch = 0.2,
+    this.chaosOriginsPerPoint = 5,
     this.throwBonus = 10,
     this.synchroBonus = 25,
     this.catchBonus = 5,
@@ -18,13 +23,40 @@ class RulesConfig {
     this.hazardFuseMs = 5000,
   });
 
+  /// Rules v1 exactly as in the plan: 5 cards, the hand refills after every
+  /// throw or pass, no timed dealing.
+  static const v1 = RulesConfig(
+    handSize: 5,
+    refillOnPlay: true,
+    dealIntervalMs: 0,
+    maxHandSize: 5,
+    drainPerSec: 4,
+    drainPerHatch: 0.5,
+    chaosOriginsPerPoint: 3,
+  );
+
+  /// Cards dealt at the start (and the refill target when [refillOnPlay]).
   final int handSize;
+
+  /// v1: draw back up to [handSize] after every throw or pass.
+  final bool refillOnPlay;
+
+  /// Kotlík rozdává: every this many ms the player with the fewest cards gets
+  /// one from the pot. 0 = off.
+  final int dealIntervalMs;
+
+  /// A timed deal to a full hand first returns its oldest card that does not
+  /// fit into the pot.
+  final int maxHandSize;
   final double incubatorMax;
   final double incubatorStart;
 
   /// Drain at game start; grows by [drainPerHatch] with every hatched creature.
   final double drainPerSec;
   final double drainPerHatch;
+
+  /// Rarity chaos bonus: +1 per this many distinct origins.
+  final int chaosOriginsPerPoint;
 
   /// Platný hod do slotu.
   final double throwBonus;
@@ -46,30 +78,53 @@ class RulesConfig {
 
   RulesConfig copyWith({
     int? handSize,
+    bool? refillOnPlay,
+    int? dealIntervalMs,
+    int? maxHandSize,
+    double? incubatorMax,
     double? incubatorStart,
     double? drainPerSec,
     double? drainPerHatch,
+    int? chaosOriginsPerPoint,
+    double? throwBonus,
+    double? synchroBonus,
+    double? catchBonus,
+    double? hazardMetBonus,
+    double? hazardFailPenalty,
     int? synchroWindowMs,
+    int? relayWindowMs,
     int? catchWindowMs,
     int? passCooldownMs,
     int? hazardFuseMs,
   }) => RulesConfig(
     handSize: handSize ?? this.handSize,
-    incubatorMax: incubatorMax,
+    refillOnPlay: refillOnPlay ?? this.refillOnPlay,
+    dealIntervalMs: dealIntervalMs ?? this.dealIntervalMs,
+    maxHandSize: maxHandSize ?? this.maxHandSize,
+    incubatorMax: incubatorMax ?? this.incubatorMax,
     incubatorStart: incubatorStart ?? this.incubatorStart,
     drainPerSec: drainPerSec ?? this.drainPerSec,
     drainPerHatch: drainPerHatch ?? this.drainPerHatch,
-    throwBonus: throwBonus,
-    synchroBonus: synchroBonus,
-    catchBonus: catchBonus,
-    hazardMetBonus: hazardMetBonus,
-    hazardFailPenalty: hazardFailPenalty,
+    chaosOriginsPerPoint: chaosOriginsPerPoint ?? this.chaosOriginsPerPoint,
+    throwBonus: throwBonus ?? this.throwBonus,
+    synchroBonus: synchroBonus ?? this.synchroBonus,
+    catchBonus: catchBonus ?? this.catchBonus,
+    hazardMetBonus: hazardMetBonus ?? this.hazardMetBonus,
+    hazardFailPenalty: hazardFailPenalty ?? this.hazardFailPenalty,
     synchroWindowMs: synchroWindowMs ?? this.synchroWindowMs,
-    relayWindowMs: relayWindowMs,
+    relayWindowMs: relayWindowMs ?? this.relayWindowMs,
     catchWindowMs: catchWindowMs ?? this.catchWindowMs,
     passCooldownMs: passCooldownMs ?? this.passCooldownMs,
     hazardFuseMs: hazardFuseMs ?? this.hazardFuseMs,
   );
+
+  @override
+  String toString() =>
+      'hand $handSize${refillOnPlay ? ' (refill)' : ''}'
+      ' · deal ${dealIntervalMs == 0 ? 'off' : '$dealIntervalMs ms'}'
+      ' · max hand $maxHandSize'
+      ' · drain $drainPerSec/s (+$drainPerHatch/hatch)'
+      ' · chaos per $chaosOriginsPerPoint origins';
 }
 
 class PlayerInfo {

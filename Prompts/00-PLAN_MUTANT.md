@@ -170,7 +170,7 @@ odhaduje a animuje optimisticky; deterministický seed + log commandů.
 **Fáze 0 – core**
 - [x] cards.json + názvosloví, model, engine, pravidla v1, testy
 - [x] rarita + jména
-- [ ] KidBot profily, CLI sim, kalibrace `drainPerSec`
+- [x] KidBot profily, CLI sim, kalibrace `drainPerSec`
 
 **Fáze 1 – feel, placeholder vizuál**
 - [ ] silueta se sloty (barevné obdélníky + text), inkubátor bar, kotlík

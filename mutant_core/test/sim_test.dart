@@ -31,7 +31,11 @@ void main() {
   test('hand-less table only hatches through the incubator', () {
     final report = runSimulation(
       engine,
-      const SimOptions(players: 2, creatures: 3, rules: RulesConfig(handSize: 0)),
+      const SimOptions(
+        players: 2,
+        creatures: 3,
+        rules: RulesConfig(handSize: 0, dealIntervalMs: 0),
+      ),
     );
     expect(report.count, 3);
     expect(report.prematureRate, 1.0);

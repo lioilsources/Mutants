@@ -43,6 +43,7 @@ CreatureRecord buildCreatureRecord(
       hazardsMet: silhouette.hazardsMet,
       synchroThrows: silhouette.synchroThrows,
       premature: premature,
+      chaosOriginsPerPoint: state.rules.chaosOriginsPerPoint,
     ),
   );
 

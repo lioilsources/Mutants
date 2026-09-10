@@ -7,6 +7,7 @@ import '../model/enums.dart';
 import '../model/game_state.dart';
 import '../model/name_tables.dart';
 import '../rules/hazard_check.dart';
+import '../rules/hints.dart';
 import '../rules/pass_catch.dart';
 import '../rules/placement.dart';
 import '../util/rng.dart';
@@ -35,6 +36,7 @@ class MutantEngine {
     final pot = List.generate(cardDefs.length, (i) => i);
     rng.shuffle(pot);
 
+    final rules = config.rules;
     final state = GameState(
       config: config,
       cardDefs: cardDefs,
@@ -44,14 +46,15 @@ class MutantEngine {
       players: [for (final p in config.players) PlayerState(id: p.id)],
       passes: [],
       silhouette: Silhouette(startedAt: 0),
-      incubator: config.rules.incubatorStart,
-      drainPerSec: config.rules.drainPerSec,
+      incubator: rules.incubatorStart,
+      drainPerSec: rules.drainPerSec,
+      nextDealAt: rules.dealIntervalMs > 0 ? rules.dealIntervalMs : null,
       takenNames: Set.of(config.takenNames),
     );
 
     // Deal round-robin. Hazards are never dealt – they stay where they are
     // in the pot and surface later.
-    for (var round = 0; round < config.rules.handSize; round++) {
+    for (var round = 0; round < rules.handSize; round++) {
       for (final player in state.players) {
         final index = state.pot.lastIndexWhere(
           (c) => defOf(state, c).kind != CardKind.hazard,
@@ -104,47 +107,47 @@ class MutantEngine {
   void _advance(_Step step, int t) {
     final s = step.s;
     while (true) {
-      int? next;
-      PendingPass? pass;
-      var hazardDue = false;
-      var incubatorDue = false;
+      final timer = _nextTimer(s);
+      if (timer == null || timer.at >= t) break;
 
-      for (final p in s.passes) {
-        if (next == null || p.expiresAt < next) {
-          next = p.expiresAt;
-          pass = p;
-        }
-      }
-      final hazard = s.hazard;
-      if (hazard != null && (next == null || hazard.expiresAt < next)) {
-        next = hazard.expiresAt;
-        pass = null;
-        hazardDue = true;
-      }
-      final zeroAt = _incubatorZeroAt(s);
-      if (zeroAt != null && (next == null || zeroAt < next)) {
-        next = zeroAt;
-        pass = null;
-        hazardDue = false;
-        incubatorDue = true;
-      }
-      if (next == null || next >= t) break;
-
-      _drainTo(s, next);
-      if (pass != null) {
-        s.passes.remove(pass);
-        _returnToPot(step, pass.card);
-        step.events.add(
-          PassDropped(s.now, from: pass.from, to: pass.to, card: pass.card),
-        );
-      } else if (hazardDue) {
-        _resolveHazard(step, met: false);
-      } else if (incubatorDue) {
-        s.incubator = 0;
-        _hatch(step, premature: true);
+      _drainTo(s, timer.at);
+      switch (timer.kind) {
+        case _TimerKind.pass:
+          final pass = timer.pass!;
+          s.passes.remove(pass);
+          _returnToPot(step, pass.card);
+          step.events.add(
+            PassDropped(s.now, from: pass.from, to: pass.to, card: pass.card),
+          );
+        case _TimerKind.hazard:
+          _resolveHazard(step, met: false);
+        case _TimerKind.incubator:
+          s.incubator = 0;
+          _hatch(step, premature: true);
+        case _TimerKind.deal:
+          s.nextDealAt = timer.at + s.rules.dealIntervalMs;
+          _dealFromPot(step);
       }
     }
     _drainTo(s, t);
+  }
+
+  /// Earliest pending timer; ties go to passes, then hazard, incubator, deal.
+  _Timer? _nextTimer(GameState s) {
+    _Timer? best;
+    void consider(int? at, _TimerKind kind, [PendingPass? pass]) {
+      if (at != null && (best == null || at < best!.at)) {
+        best = _Timer(at, kind, pass);
+      }
+    }
+
+    for (final p in s.passes) {
+      consider(p.expiresAt, _TimerKind.pass, p);
+    }
+    consider(s.hazard?.expiresAt, _TimerKind.hazard);
+    consider(_incubatorZeroAt(s), _TimerKind.incubator);
+    consider(s.nextDealAt, _TimerKind.deal);
+    return best;
   }
 
   int? _incubatorZeroAt(GameState s) {
@@ -439,25 +442,58 @@ class MutantEngine {
 
   // --- pot & hatching ------------------------------------------------------
 
-  /// Draws up to hand size. A hazard on top surfaces (or, if one is already
-  /// ticking, goes to the bottom of the pot).
+  /// v1 refill: draws back up to hand size after a throw or pass.
   void _refill(_Step step, PlayerState player) {
     final s = step.s;
+    if (!s.rules.refillOnPlay) return;
+    while (player.hand.length < s.rules.handSize && _drawOne(step, player)) {}
+  }
+
+  /// Kotlík rozdává: the player with the fewest cards gets one. If even they
+  /// are full, the pot first takes back their oldest card that does not fit,
+  /// so a table of useless hands never stalls.
+  void _dealFromPot(_Step step) {
+    final s = step.s;
+    final fewest = s.players.map((p) => p.hand.length).reduce(math.min);
+    final candidates = [
+      for (final p in s.players)
+        if (p.hand.length == fewest) p,
+    ];
+    final player = candidates[step.rng.nextInt(candidates.length)];
+    if (player.hand.length >= s.rules.maxHandSize) {
+      final fitting = fittingCards(s, catalog, player.id).toSet();
+      final useless = player.hand.where((c) => !fitting.contains(c));
+      if (useless.isEmpty) return;
+      final card = useless.first;
+      player.hand.remove(card);
+      player.caughtAt.remove(card);
+      _returnToPot(step, card);
+      step.events.add(CardReturned(s.now, player: player.id, card: card));
+    }
+    _drawOne(step, player);
+  }
+
+  /// Draws one placeable card. A hazard on top surfaces on the way (or, if
+  /// one is already ticking, goes to the bottom of the pot).
+  bool _drawOne(_Step step, PlayerState player) {
+    final s = step.s;
     var hazardSkips = 0;
-    while (player.hand.length < s.rules.handSize && s.pot.isNotEmpty) {
+    while (s.pot.isNotEmpty) {
       final card = s.pot.removeLast();
       if (defOf(s, card).kind == CardKind.hazard) {
         if (s.hazard == null) {
           _surfaceHazard(step, card, s.rules.hazardFuseMs);
         } else {
           s.pot.insert(0, card);
-          if (++hazardSkips > s.pot.length) break;
+          if (++hazardSkips > s.pot.length) return false;
         }
         continue;
       }
       player.hand.add(card);
       step.events.add(CardDrawn(s.now, player: player.id, card: card));
+      return true;
     }
+    return false;
   }
 
   /// Parts go back to a random spot; hazards to the bottom so an instantly
@@ -524,6 +560,16 @@ class MutantEngine {
     player.hand.add(card);
     step.events.add(CardDrawn(s.now, player: player.id, card: card));
   }
+}
+
+enum _TimerKind { pass, hazard, incubator, deal }
+
+class _Timer {
+  const _Timer(this.at, this.kind, this.pass);
+
+  final int at;
+  final _TimerKind kind;
+  final PendingPass? pass;
 }
 
 class _Step {

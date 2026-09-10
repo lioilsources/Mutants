@@ -1,7 +1,8 @@
 // CLI balance simulation (PLAN §6.1).
 //
 //   dart run mutant_core:sim --players 3 --creatures 200 --seed 1
-//   dart run mutant_core:sim --players 3 --sweep 1,1.5,2,3,4
+//   dart run mutant_core:sim --players 3 --sweep drain=1,2,3,4
+//   dart run mutant_core:sim --rules v1
 import 'dart:io';
 
 import 'package:mutant_core/io.dart';
@@ -15,22 +16,35 @@ Usage: dart run mutant_core:sim [options]
   --seed N             (default 1)
   --profiles a,b,c     bot profiles cycled over seats: hasty, careful, passer
                        (default hasty,careful,passer)
-  --drain X            starting drainPerSec (default 4)
-  --drain-per-hatch X  drain growth per hatched creature (default 0.5)
-  --session N          creatures per play session, 0 = one session (default 5)
-  --sweep a,b,c        run once per drainPerSec value and print a table
   --reaction-scale X   multiply every bot's reaction time (default 1)
+  --session N          creatures per play session, 0 = one session (default 5)
+
+Rules (start from --rules, then override):
+  --rules NAME         default | v1 (the plan's original numbers)
+  --hand N             starting hand (refill target with --refill true)
+  --refill BOOL        refill the hand after every throw/pass
+  --deal MS            pot deals a card every MS, 0 = off
+  --max-hand N         a timed deal to a full hand swaps a useless card
+  --drain X            starting drainPerSec
+  --drain-per-hatch X  drain growth per hatched creature
+
+  --sweep KEY=a,b,c    run once per value of a rule (drain, drain-per-hatch,
+                       deal, hand, max-hand) and print a table
 ''';
 
+const _ruleKeys = ['hand', 'refill', 'deal', 'max-hand', 'drain', 'drain-per-hatch'];
+
 void main(List<String> arguments) {
-  final Map<String, String> args;
   try {
-    args = _parseArgs(arguments);
+    _run(arguments);
   } on FormatException catch (e) {
     stderr.writeln('${e.message}\n\n$_usage');
     exitCode = 64;
-    return;
   }
+}
+
+void _run(List<String> arguments) {
+  final args = _parseArgs(arguments);
   if (args.containsKey('help')) {
     stdout.write(_usage);
     return;
@@ -50,13 +64,15 @@ void main(List<String> arguments) {
         null => throw FormatException('Unknown profile "$id"'),
       },
   ];
-  const defaults = RulesConfig();
-  final rules = defaults.copyWith(
-    drainPerSec: double.parse(args['drain'] ?? '${defaults.drainPerSec}'),
-    drainPerHatch: double.parse(
-      args['drain-per-hatch'] ?? '${defaults.drainPerHatch}',
-    ),
-  );
+
+  var rules = switch (args['rules'] ?? 'default') {
+    'default' => const RulesConfig(),
+    'v1' => RulesConfig.v1,
+    final other => throw FormatException('Unknown rules "$other"'),
+  };
+  for (final key in _ruleKeys) {
+    if (args[key] case final value?) rules = _withRule(rules, key, value);
+  }
 
   final engine = loadEngine();
   SimOptions optionsFor(RulesConfig r) => SimOptions(
@@ -71,15 +87,15 @@ void main(List<String> arguments) {
   stdout.writeln(
     'Mutant sim · players $players (${[for (var i = 0; i < players; i++) profiles[i % profiles.length].name].join(', ')})'
     ' · creatures $creatures · seed $seed · session $session'
-    ' · drain +${rules.drainPerHatch}/hatch'
     '${reactionScale == 1 ? '' : ' · reaction ×$reactionScale'}',
   );
+  stdout.writeln('rules: $rules');
 
-  final sweep = args['sweep'];
-  if (sweep != null) {
-    _printSweep(engine, [
-      for (final v in sweep.split(',')) double.parse(v.trim()),
-    ], optionsFor, rules);
+  if (args['sweep'] case final sweep?) {
+    final eq = sweep.indexOf('=');
+    final key = eq < 0 ? 'drain' : sweep.substring(0, eq);
+    final values = (eq < 0 ? sweep : sweep.substring(eq + 1)).split(',');
+    _printSweep(engine, key, values, (value) => optionsFor(_withRule(rules, key, value.trim())));
     return;
   }
 
@@ -90,6 +106,17 @@ void main(List<String> arguments) {
       '${(report.simulatedMs / 60000).toStringAsFixed(1)} min simulated '
       'in ${watch.elapsedMilliseconds} ms)');
 }
+
+RulesConfig _withRule(RulesConfig r, String key, String value) => switch (key) {
+  'hand' => r.copyWith(handSize: int.parse(value)),
+  'refill' => r.copyWith(refillOnPlay: value == 'true'),
+  'deal' => r.copyWith(dealIntervalMs: int.parse(value)),
+  'max-hand' => r.copyWith(maxHandSize: int.parse(value)),
+  'drain' => r.copyWith(drainPerSec: double.parse(value)),
+  'drain-per-hatch' => r.copyWith(drainPerHatch: double.parse(value)),
+  'chaos' => r.copyWith(chaosOriginsPerPoint: int.parse(value)),
+  _ => throw FormatException('Unknown rule "$key"'),
+};
 
 Map<String, String> _parseArgs(List<String> arguments) {
   final result = <String, String>{};
@@ -128,7 +155,7 @@ void _printReport(
   final median = percentile(durations, 0.5);
   final n = r.count == 0 ? 1 : r.count;
 
-  stdout.writeln('drainPerSec ${rules.drainPerSec}\n');
+  stdout.writeln();
   if (r.truncated) {
     stdout.writeln('⚠️  stopped early: a session hatched nothing within the time limit');
   }
@@ -186,20 +213,20 @@ void _printReport(
 
 void _printSweep(
   MutantEngine engine,
-  List<double> drains,
-  SimOptions Function(RulesConfig) optionsFor,
-  RulesConfig base,
+  String key,
+  List<String> values,
+  SimOptions Function(String value) optionsFor,
 ) {
   stdout.writeln(
-    '\n drain │ median │ premature │ rare+  │ hazards met │ synchro/creature',
+    '\n ${key.padLeft(15)} │ median │ premature │ rare+  │ hazards met │ synchro/creature',
   );
-  stdout.writeln('───────┼────────┼───────────┼────────┼─────────────┼─────────────────');
-  for (final drain in drains) {
-    final r = runSimulation(engine, optionsFor(base.copyWith(drainPerSec: drain)));
+  stdout.writeln('${'─' * 17}┼────────┼───────────┼────────┼─────────────┼─────────────────');
+  for (final value in values) {
+    final r = runSimulation(engine, optionsFor(value));
     final median = percentile(r.durationsMs(), 0.5);
     final n = r.count == 0 ? 1 : r.count;
     stdout.writeln(
-      ' ${drain.toStringAsFixed(2).padLeft(5)} │ ${_sec(median).padLeft(6)} │'
+      ' ${value.trim().padLeft(15)} │ ${_sec(median).padLeft(6)} │'
       ' ${_pct(r.prematureRate).padLeft(9)} │ ${_pct(r.rarePlusRate).padLeft(6)} │'
       ' ${_pct(r.hazardMetRate).padLeft(11)} │ ${(r.synchroPlacements / n).toStringAsFixed(2).padLeft(8)}',
     );

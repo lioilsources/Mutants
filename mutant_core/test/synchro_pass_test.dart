@@ -95,8 +95,8 @@ void main() {
       );
     });
 
-    test('passer refills their hand', () {
-      final h = Harness(rules: const RulesConfig());
+    test('v1: passer refills their hand', () {
+      final h = Harness(rules: RulesConfig.v1);
       final card = h.player(0).hand.first;
       final events = h.apply(PassCard(100, from: 0, to: 1, card: card));
       expect(has<CardDrawn>(events), isTrue);

@@ -1,16 +1,20 @@
 # mutant_core
 
 Herní logika hry **Mutant** (viz `../Prompts/00-PLAN_MUTANT.md`) – čistý Dart bez Flutteru.
-Fáze 0: karty, engine, pravidla v1, rarita, jména, bestiář, KidBot, CLI simulace.
+Fáze 0: karty, engine, pravidla, rarita, jména, bestiář, KidBot, CLI simulace a kalibrace.
 
 ```bash
 dart pub get
-dart test                                   # všechna pravidla z §2–§4
+dart test
 dart analyze
 dart run mutant_core:sim --players 3 --creatures 200 --seed 1
-dart run mutant_core:sim --players 3 --sweep 1,2,4,8          # kalibrace drainPerSec
+dart run mutant_core:sim --players 3 --sweep deal=4000,6000,8000   # sweep libovolného pravidla
+dart run mutant_core:sim --rules v1                                 # původní čísla z plánu
 dart run mutant_core:sim --profiles careful,passer --reaction-scale 3
 ```
+
+Klíče pro `--sweep KEY=a,b,c` i samostatné přepínače: `hand`, `refill`, `deal`, `max-hand`,
+`drain`, `drain-per-hatch` (a `chaos` jen ve sweepu).
 
 ## Struktura
 
@@ -30,18 +34,51 @@ Engine nikdy nemění stav, který dostal – pracuje na kopii. Nečte hodiny an
 Random: čas přichází v `Command.ts` od hostu, náhoda z vlastního `Rng` v `GameState`,
 takže seed + log commandů = přesný replay (ověřeno testem).
 
-## Výklad pravidel v1
+## Změny oproti plánu v1 (výsledek kalibrace)
+
+S pravidly v1 byl tvor hotový za ~2,4 s místo 60–90 s: ruce po 5 kartách s doplňováním pokryjí
+6 slotů skoro hned a `drainPerSec` mění jen počet předčasných líhnutí, ne tempo. Výchozí
+`RulesConfig()` proto tempo řídí kotlíkem; `RulesConfig.v1` (`--rules v1`) drží původní čísla.
+
+| | v1 (plán) | výchozí |
+|---|---|---|
+| ruka na začátku | 5 | 3 |
+| doplnění po hodu / předání | ano | ne |
+| kotlík rozdává | – | 1 kartu každých 6 s hráči s nejméně kartami |
+| max. ruka | – | 5 (kotlík si vezme zpět nejstarší nepasující kartu) |
+| `drainPerSec` | 4 | 0,85 |
+| drain za vylíhnutého mutanta | +0,5 | +0,2 |
+| chaos (rarita) | +1 za 3 původy | +1 za 5 původů |
+
+Výsledek se 3 profily botů (seed 1, 200 mutantů, sezení po 5):
+
+| hráči | medián na mutanta | předčasně | vzácný+ |
+|---|---|---|---|
+| 2 | 53,9 s | 10 % | 40 % |
+| 3 | 66,3 s | 7,5 % | 47,5 % |
+| 4 | 71,9 s | 20 % | 43 % |
+| 5 | 55,3 s | 8 % | 48,5 % |
+| **cíl** | **60–90 s** | **< 25 %** | **~30 %** |
+
+**Otevřené:** vzácný+ je pořád nad cílem. Zbytek dělá hlavně bonus za Mutaci (+1 asi u 70 %
+tvorů); jeho oslabení by měnilo pravidlo z plánu, ne jen číslo.
+
+## Výklad pravidel
 
 Místa, kde plán nechává prostor, a jak jsou teď implementovaná. Vše je snadné změnit.
 
 **Čas**
-- Drain, fuse Událostí a timeout předání se dopočítají chronologicky až do `ts` commandu.
+- Drain, fuse Událostí, timeout předání a rozdávání kotlíku se dopočítají chronologicky až do
+  `ts` commandu.
 - Deadline je včetně: hod přesně v 5000 ms ještě splní Událost, chycení přesně ve 2 s platí.
 
 **Ruka a kotlík**
-- Po hodu i po předání se hráč hned dobere na 5. Chycená karta ruku zvětší (limit není).
+- Kotlík rozdá kartu každých `dealIntervalMs` hráči s nejméně kartami (remíza náhodně). Má-li
+  i ten plnou ruku, kotlík si nejdřív vezme zpět jeho nejstarší kartu, která nikam nepasuje;
+  když pasují všechny, nerozdává.
+- v1 (`refillOnPlay`): po hodu i předání se hráč hned dobere na 5. Chycená karta ruku zvětší.
 - Vytažená Událost se vynoří; když už jedna běží, jde nová na dno kotlíku.
-  Při rozdávání se Události přeskakují.
+  Při rozdávání na začátku se Události přeskakují.
 - Karty z vylíhnutého tvora a spadlá předání se zamíchají zpět; Události jdou na dno
   (jinak by šla okamžitě splněná Událost vytáhnout znovu a farmit raritu).
 
@@ -62,7 +99,8 @@ Místa, kde plán nechává prostor, a jak jsou teď implementovaná. Vše je sn
 - Když se tvor vylíhne s běžící Událostí, zruší se bez trestu.
 
 **Rarita, jméno, záznam**
-- Chaos = počet různých původů ÷ 3 (dolů); soulad jen u kompletního tvora; bere se vyšší.
+- Chaos = počet různých původů ÷ `chaosOriginsPerPoint` (dolů); soulad jen u kompletního tvora;
+  bere se vyšší.
 - Fúze a Mutace +1 jednou bez ohledu na počet; každá splněná Událost +1.
 - Dominantní element: pečeť › nejčastější element › dřívější slot (hlava → extra).
 - Chybějící hlava/trup/element: `Šedo-Bezhlavo-bezbřichák`. Kolize jmen → římská číslice
@@ -81,3 +119,4 @@ příchozí kartu (`catchRate`), s `mistakeRate` hodí náhodnou kartu, jinak ho
 (přednostně tu, která splní Událost) – nebo ji s `passRate` pošle kamarádovi. Když nic
 nepasuje, s `passRate` pošle pryč nepotřebnou kartu. Po chycení hází rychleji (štafeta).
 Simulace běží po sezeních (`--session`, výchozí 5), protože drain roste s každým mutantem.
+Boti jsou model dětí, ne děti – čísla jsou orientační, rozhodne test s dítětem ve Fázi 1.

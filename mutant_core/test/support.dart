@@ -16,17 +16,18 @@ const fireCreature = [
   'extra_dragon',
 ];
 
-/// Scenario driver. Defaults: hand size 0 (no dealing, no refills, so hands
-/// hold only what a test gives) and the incubator frozen at 0 so bonuses can
-/// be read directly.
+/// Scenario driver. Defaults: rules v1 with hand size 0 (no dealing, no
+/// refills, so hands hold only what a test gives) and the incubator frozen at
+/// 0 so bonuses can be read directly.
 class Harness {
   Harness({
     int players = 2,
-    RulesConfig rules = const RulesConfig(handSize: 0),
+    RulesConfig? rules,
     int seed = 7,
     bool frozen = true,
     Set<String> takenNames = const {},
   }) {
+    rules ??= RulesConfig.v1.copyWith(handSize: 0);
     state = engine.newGame(
       GameConfig(
         seed: seed,
@@ -64,7 +65,8 @@ class Harness {
   /// Puts a copy of [defId] into a hand and returns its instance id.
   int give(int player, String defId, {int ts = 0}) {
     final events = apply(DebugGiveCard(ts, player: player, defId: defId));
-    return one<CardDrawn>(events).card;
+    // A timed deal may fire first in the same step; the command runs last.
+    return events.whereType<CardDrawn>().last.card;
   }
 
   List<GameEvent> throwCard(int player, int card, int ts) =>
