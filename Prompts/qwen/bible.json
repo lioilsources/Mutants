@@ -1,0 +1,161 @@
+{
+  "_comment": "Zdroj pro Prompts/qwen/build_prompts.py. Uprav styl nebo vzhled dílu tady a spusť generátor znovu.",
+  "style": {
+    "figure_intro": "Studio product photo of ONE collectible designer vinyl toy for kids: a friendly chimera monster built as a ball-jointed action figure from six mismatched toy parts.",
+    "pose": "Pose: standing upright on its two hind limbs like a small kaiju toy, body turned three-quarters to the left, face looking at the viewer, arms held slightly out from the sides, legs apart, relaxed neutral stance.",
+    "pose_quadruped_alt": "Pose: standing on all four limbs like an animal, body in side three-quarter view facing left, head turned to the viewer, tail lifted, relaxed neutral stance.",
+    "tail_pose": ", curving out behind the body, clearly visible and not touching the legs",
+    "extra_pose_wings": ", spread open to both sides",
+    "extra_pose_single": ", upright and clearly visible above the shoulders",
+    "material": "Chunky rounded proportions, oversized head, short thick limbs, friendly expression, big simple eyes. Every body part is its own smooth molded plastic piece in its own colours; the pieces meet at clearly visible glossy off-white ball joints at the neck, shoulders, hips, tail base and back mount. Matte soft-touch vinyl with simple painted details, a few bold colours per piece. Fur, feathers and scales are sculpted as smooth stylised shapes, no loose hair.",
+    "framing": "Soft even studio lighting from the front, faint soft contact shadow under the feet, seamless plain light-grey background, the whole figure centred in frame with empty margin on all sides, nothing cropped, sharp focus, no text.",
+    "card_intro": "Studio product photo of ONE loose toy part from a build-a-figure set of collectible designer vinyl toys, shown alone:",
+    "card_material": "Smooth molded matte soft-touch vinyl with simple painted details, chunky rounded kid-friendly shapes, fur, feathers and scales sculpted as smooth stylised forms.",
+    "card_framing": "Three-quarter view, soft even studio lighting, faint soft contact shadow, seamless plain light-grey background, centred with empty margin on all sides, nothing cropped, sharp focus, no text.",
+    "negative": "text, letters, numbers, logo, watermark, packaging, box, display stand, pedestal, extra heads, extra limbs, missing limbs, fused limbs, second figure, human, realistic animal, photorealistic fur, loose hair strands, scary, horror, blood, gore, weapons, dark moody lighting, harsh shadows, coloured background, gradient background, scenery, floor texture, motion blur, depth of field, cropped, cut off",
+    "negative_object": "text, letters, numbers, logo, watermark, packaging, box, second object, human, scary, horror, blood, dark moody lighting, harsh shadows, coloured background, gradient background, scenery, motion blur, depth of field, cropped, cut off",
+    "negative_backdrop": "text, letters, numbers, logo, watermark, characters, creatures, people, toy figures, animals, motion blur, cropped",
+    "negative_zh_2512": "低分辨率，低画质，肢体畸形，手指畸形，画面过饱和，蜡像感，人脸无细节，过度光滑，画面具有AI感。构图混乱。文字模糊，扭曲。"
+  },
+  "joints": {
+    "head": "Under the head is a glossy off-white ball-joint peg for the neck.",
+    "torso": "It has glossy off-white ball-joint sockets at the neck, both shoulders, both hips and the tail base, and no head or limbs attached.",
+    "front": "The two matching left and right pieces lie side by side, each with a glossy off-white ball-joint peg at the shoulder end.",
+    "back": "The two matching left and right pieces stand side by side, each with a glossy off-white ball-joint peg at the hip end.",
+    "tail": "At its base is a glossy off-white ball-joint peg.",
+    "extra": "At its base is a small glossy off-white ball-joint mount."
+  },
+  "parts": {
+    "head_trex": "a chunky T-rex head with a big toothy grin and small friendly eyes, warm orange-red scales with a darker ember-red ridge on top",
+    "head_shark": "a rounded great white shark head with a wide smile full of blunt triangular teeth, ocean-blue on top and white underneath",
+    "head_owl": "a round owl head with huge glowing yellow eyes, a small curved beak and two feather ear tufts, deep purple feathers",
+    "head_triceratops": "a triceratops head with three blunt horns and a wide bony neck frill, stone-grey and sandy-brown rocky skin",
+    "head_fly": "a housefly head with two enormous faceted compound eyes and short antennae, bright yellow with black stripes",
+    "head_wolf": "a snow wolf head with pointed ears and small white fangs, frosty pale-blue and white fur",
+    "head_dragon": "a dragon head with two curved golden-orange horns, small fangs and a smoking snout, glossy red scales",
+    "head_robot": "a boxy retro robot head with three round glowing lens eyes and a small bolt antenna, yellow painted metal with grey rivets",
+    "head_deer": "a gentle deer head with branching antlers sprouting small green leaves, moss-green and light-brown fur",
+    "head_spider": "a fuzzy spider head with eight shiny round eyes and two small fangs, dark purple",
+    "torso_turtle": "a domed sea-turtle shell body, blue-green shell with a hexagon pattern and a pale yellow belly plate",
+    "torso_polar_bear": "a big round polar bear body with a soft belly, white fur with a pale icy-blue tint",
+    "torso_beetle": "a rounded beetle body covered by two glossy hard wing-case shells, pebble-grey and brown like polished stone",
+    "torso_stegosaurus": "a barrel-shaped stegosaurus body with a row of leaf-shaped plates along the spine, leafy green with a lighter green belly",
+    "torso_dragon": "a broad dragon chest with layered red scales and a glowing orange belly plate",
+    "torso_robot": "a boxy riveted metal robot torso with a round glowing yellow power core in the chest, yellow and grey painted steel",
+    "torso_penguin": "a plump penguin body with a smooth white belly and an icy blue-black back",
+    "torso_octopus": "a soft bulbous octopus body with rows of small suction cups, dark violet with lighter purple spots",
+    "torso_parrot": "a puffed-out parrot chest of layered bright green feathers with yellow-green tips",
+    "torso_shadow_dragon": "a slim dragon body with smooth matte black-purple scales and a faintly glowing violet belly plate",
+    "front_crab": "a pair of big crab pincer claws, blue shell with lighter teal tips",
+    "front_mantis": "a pair of folded praying-mantis forelegs with serrated edges, bright leaf green",
+    "front_trex": "a pair of comically tiny T-rex arms with two little claws each, orange-red scales",
+    "front_drill": "a pair of robot arms ending in cone-shaped spiral drill bits, grey steel dusted with brown rock dust",
+    "front_eagle": "a pair of eagle legs with strong yellow scaly feet and sharp dark talons, golden-yellow feathers at the top",
+    "front_submarine": "a pair of jointed submarine grabber arms with three-finger metal claws, blue painted metal with round rivets",
+    "front_dragon": "a pair of muscular dragon forepaws with three black claws each, dark purple scales",
+    "front_walrus": "a pair of wide flat walrus flippers, pale grey-blue with frosty white edges",
+    "front_raptor": "a pair of slim raptor arms with long hooked claws, dark purple-black scales",
+    "front_gorilla": "a pair of huge long gorilla arms with big fists, mossy dark-green fur with lighter green hands",
+    "back_forest_dragon": "a pair of dragon hind legs with clawed feet, moss-green scales with small leaves growing at the knees",
+    "back_grasshopper": "a pair of long folded grasshopper jumping legs, bright green",
+    "back_phoenix": "a pair of phoenix bird legs with fiery orange feather tufts and golden talons",
+    "back_brontosaurus": "a pair of thick pillar-like brontosaurus legs with round toenails, grey stone-textured skin",
+    "back_tracks": "a pair of small tank caterpillar tracks in place of hind legs, dark grey treads with stone-brown wheels",
+    "back_dragon": "a pair of strong dragon hind legs with orange-clawed feet, red scales",
+    "back_crab": "a pair of sturdy pointed crab walking legs, blue shell with teal joints",
+    "back_hare": "a pair of big snow-hare hind legs with oversized feet, white fur with pale blue toe pads",
+    "back_heron": "a pair of very long thin heron legs with webbed feet, blue-grey",
+    "back_spider": "a pair of long arched fuzzy spider legs, dark purple with lighter violet bands",
+    "tail_metal": "a segmented metal robot tail ending in a yellow lightning-bolt-shaped plug",
+    "tail_scorpion": "a curled scorpion tail arching upward with a glowing orange-red stinger, dark red segments",
+    "tail_fish": "a fish tail with a wide forked fin, shiny blue scales",
+    "tail_ankylosaurus": "a thick armored ankylosaurus tail ending in a heavy round stone club, grey-brown",
+    "tail_peacock": "a fanned-out peacock tail of green feathers with round eye spots",
+    "tail_fox": "a big bushy fox tail, orange-red with a white tip",
+    "tail_ice_dragon": "a long dragon tail with a row of small icicle spikes, pale icy-blue scales",
+    "tail_whale": "a broad whale tail fluke, pale icy-blue with a white underside",
+    "tail_ninja_robot": "a thin flexible robot tail of black-purple segments ending in a small throwing-star tip",
+    "tail_swallow": "a slender deeply forked swallow tail, dark blue feathers with yellow streaks",
+    "extra_dragonfly": "two pairs of long narrow translucent dragonfly wings with yellow veins",
+    "extra_bat": "a pair of leathery bat wings, dark purple membrane with black finger bones",
+    "extra_dragon": "a pair of large dragon wings, red scaly arms with orange membrane",
+    "extra_eagle": "a pair of broad feathered eagle wings, grey-brown stone-coloured feathers",
+    "extra_rhino": "a single thick curved grey rhinoceros horn rising from between the shoulders",
+    "extra_shark_fin": "a tall triangular shark dorsal fin, ocean blue",
+    "extra_antenna": "a small radar dish antenna on a short mast with a blinking light, yellow metal",
+    "extra_pterodactyl": "a pair of pterodactyl wings with smooth skin membrane, sea-blue with teal undersides",
+    "extra_ice_spikes": "a row of jagged translucent ice-crystal spikes along the back, pale icy blue",
+    "extra_butterfly": "a pair of big rounded butterfly wings, leaf-green with yellow and pink flower-like spots"
+  },
+  "jokers": {
+    "_template": "Studio product photo of ONE toy laboratory flask full of glowing green mutagen slime. A blob of slime rises out of the flask and forms the rough wobbly shape of {shape}. Glossy translucent lime-green goo with small bubbles and a soft inner glow, round glass flask, collectible designer vinyl toy style, chunky rounded kid-friendly shapes.",
+    "head": "a monster head with two round eyes",
+    "torso": "a round monster belly",
+    "front": "two grabbing arms",
+    "back": "two stomping legs",
+    "tail": "a long curling tail",
+    "extra": "a pair of small wings"
+  },
+  "seals": {
+    "_template": "Studio product photo of ONE round toy wax-seal medallion: a thick disc with a soft wavy edge, embossed in the centre with a simple bold {emblem} symbol, {colour} matte vinyl with a glossy off-white rim, collectible designer vinyl toy style, chunky rounded kid-friendly shapes.",
+    "fire": [
+      "flame",
+      "warm orange-red"
+    ],
+    "water": [
+      "water drop",
+      "ocean blue"
+    ],
+    "ice": [
+      "snowflake",
+      "pale icy blue"
+    ],
+    "lightning": [
+      "lightning bolt",
+      "bright yellow"
+    ],
+    "plant": [
+      "leaf",
+      "leafy green"
+    ],
+    "stone": [
+      "mountain rock",
+      "warm grey-brown"
+    ],
+    "shadow": [
+      "crescent moon",
+      "deep purple"
+    ]
+  },
+  "hazards": {
+    "_template": "Studio product photo of ONE small collectible designer vinyl toy object: {object}. Matte soft-touch vinyl with simple painted details, chunky rounded kid-friendly shapes, slightly mischievous but not scary.",
+    "hazard_storm": "a chubby dark-grey storm cloud with a yellow lightning bolt underneath and three curly wind swirls",
+    "hazard_earthquake": "a chunk of brown ground split by a zig-zag crack, with three small rocks bouncing above it",
+    "hazard_hunger": "an empty dinner plate with a fork and a knife and one small bitten bone on it",
+    "hazard_flood": "a tall curling blue wave with white foam tips",
+    "hazard_darkness": "a dark purple night cloud covering a small crescent moon, with two tiny glowing eyes peeking out"
+  },
+  "backdrops": {
+    "reveal_stage": {
+      "size": [
+        928,
+        1664
+      ],
+      "prompt": "Empty toy display stage inside a kids' mad-scientist laboratory at night: a round podium in the centre under a soft warm spotlight, glass incubator tubes with glowing green liquid on the left and right, deep purple walls, rounded cartoonish shapes in collectible vinyl toy style. No characters, no creatures, no text. The middle of the image above the podium is empty space for a figure. Portrait composition, podium in the lower third."
+    },
+    "collection_shelf": {
+      "size": [
+        928,
+        1664
+      ],
+      "prompt": "Empty collector display cabinet seen straight from the front: five rows of small round podiums on dark wooden shelves, each podium lit by a tiny warm lamp, deep purple laboratory wall behind, rounded cartoonish shapes in collectible vinyl toy style. No figures, no creatures, no text. Portrait composition, evenly spaced, symmetrical."
+    },
+    "card_back": {
+      "size": [
+        1056,
+        1584
+      ],
+      "prompt": "Playing card back design, flat front view filling the whole frame: a bubbling green cauldron emblem in the centre, a symmetrical ornamental border made of bones, leaves, gears, feathers and fish scales, deep purple background with lighter purple pattern, bold simple shapes like a printed toy package illustration. No text, no letters."
+    }
+  }
+}

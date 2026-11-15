@@ -179,10 +179,9 @@ odhaduje a animuje optimisticky; deterministický seed + log commandů.
 - [x] puppet mode + DebugPanel + scénáře (přes cardkit)
 - ✅ Výstup: drain rychlost, okno chycení, zda cooldown předání sedí, první test s dítětem
 
-**Fáze 2 – paper-doll a vizuál** (samostatný plán)
-- [ ] kotevní body per slot, vrstvení, element overlay
-- [ ] asset pipeline (ComfyUI) pro 60 částí v jednotném stylu
-- [ ] animace líhnutí, karta mutanta jako obrázek ke sdílení
+**Fáze 2 – vizuál** → nahrazeno plánem [`01-PLAN_KOLEKCE.md`](01-PLAN_KOLEKCE.md): místo paper-dollu
+uzavřená sbírka 28 mutantů, odmítání nepasujících karet a hotové (3D) figurky. Tím se mění i pravidla
+z §2–4 (fúze, Mutace, rarita, jména) – platí popis v novém plánu.
 
 **Fáze 3 – síť** (z cardkit, stejně jako Fuse) + sdílení bestiáře
 
