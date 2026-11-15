@@ -2,7 +2,8 @@
 
 Navazuje na [`00-PLAN_MUTANT.md`](00-PLAN_MUTANT.md) a **nahrazuje jeho „Fázi 2 – paper-doll"**.
 Fáze 0 (`mutant_core`) a Fáze 1 (`app`, zástupná grafika) jsou hotové. Tento dokument je zadání
-k implementaci. Prompty pro grafiku jsou v [`02-QWEN_IMAGE_PROMPTS.md`](02-QWEN_IMAGE_PROMPTS.md).
+k implementaci. Prompty pro grafiku jsou v [`02-QWEN_IMAGE_PROMPTS.md`](02-QWEN_IMAGE_PROMPTS.md),
+prompty pro rozpohybování figurek videomodelem v [`03-WAN_LTX_ANIMACE.md`](03-WAN_LTX_ANIMACE.md).
 
 ## 0. Zadání
 
@@ -253,8 +254,9 @@ Nedopečený: šedá figurka (barevný filtr přes widget), krok 4 se přeskoč�
 „Nestihli jsme ho dopéct – zkuste ho postavit celého".
 
 `FigureView(mutantId, look: painted|grey|shadow, controller)` je jediné místo, které ví, čím se figurka
-kreslí: `StandeeFigure` (2D hero obrázek, pohyby = squash/poskok/naklonění obrázku) a od M4 `GlbFigure`.
-Výběr podle toho, jestli existuje `assets/figures/<id>/figure.glb`.
+kreslí: `StandeeFigure` (2D hero obrázek, pohyby = squash/poskok/naklonění obrázku), `ClipFigure`
+(klipy z videomodelu, §6.5) a `GlbFigure` (3D, §6.1). Výběr podle toho, co je v `assets/figures/<id>/`:
+`figure.glb`, jinak `clips/`, jinak jen `hero.webp`.
 
 ### 5.4 Sbírka (nahrazuje seznam bestiáře)
 `ui/collection/`. Mřížka 28 polic: řada prapředků + kříženci po rodech. Stav: neznámý (černý stín
@@ -271,7 +273,8 @@ scénáře z Fáze 1 přepsat na recepty („Chybí jen ocas" = Žralomedvěd be
 app/assets/cards/<card_id>.webp            512×512, průhledné pozadí
 app/assets/figures/<mutant_id>/hero.webp   1024×1024, průhledné pozadí
 app/assets/figures/<mutant_id>/shadow.webp silueta (generuje se z alfa kanálu hero)
-app/assets/figures/<mutant_id>/figure.glb  od M4
+app/assets/figures/<mutant_id>/clips/<klip>.mp4  varianta video, od M3b (§6.5)
+app/assets/figures/<mutant_id>/figure.glb  varianta 3D, od M4
 ```
 `Prompts/qwen/import_art.py`: vezme složku s výstupy Qwenu (názvy podle `out` v `batch.jsonl`),
 odstraní pozadí (rembg), ořízne, zmenší, uloží webp a vyrobí `shadow.webp`. Skript vznikne v M2,
@@ -361,6 +364,37 @@ Vyzkoušet na pilotní figurce v tomto pořadí a změřit start, fps, paměť a
 Stav balíčků ověřit na pub.dev v den implementace. Rozhodnutí a čísla zapsat do `app/README.md`.
 `GlbFigure` schovat za `FigureView`, aby šel renderer vyměnit.
 
+### 6.5 Varianta: video figurka
+Pohyby figurky jde místo 3D vyrobit videomodelem přímo z hero obrázku. Prompty pro Wan a LTX a postup,
+jak jejich animace porovnat, jsou v [`03-WAN_LTX_ANIMACE.md`](03-WAN_LTX_ANIMACE.md).
+
+Kontrakt klipů:
+- `app/assets/figures/<id>/clips/<klip>.mp4`, jména klipů stejná jako v §6.1 (`idle`, `assemble`,
+  `show_<slot>`, `cheer`); čtverec 512–768 px, H.264, bez zvukové stopy. Zvuk volitelně zvlášť jako
+  `<klip>.m4a`.
+- Každý klip kromě `assemble` začíná i končí stejným snímkem (hero obrázek) → klipy jdou řadit:
+  `idle` ve smyčce, na povel `show_*`, zpět `idle`.
+- Rozpočet ≤ 300 kB na klip (28 × 9 = 252 klipů ≈ 75 MB).
+
+`ClipFigure` přehrává klipy přes `video_player` v kulatém „okně inkubátoru" s měkkým okrajem, takže
+průhlednost není potřeba. Klip se střídá vždy na své hranici a následující je přednačtený, aby přechod
+neblikl. Vzhled `grey` = `ColorFiltered` přes video. Varianta s průhledností (snímky bez pozadí jako
+animovaný WebP dekódovaný přes `ui.Codec`) jen když pilot ukáže, že okno nestačí.
+
+`Prompts/video/pack_clips.py` (vznikne v M3b, spouští člověk): vezme výstupy pojmenované podle `out`
+v `batch_*.jsonl`, zmenší a překóduje je (ffmpeg), oddělí zvuk a ohlásí klipy, které neprojdou –
+příliš velký rozdíl prvního a posledního snímku, pohyb okrajů obrazu (kamera), překročený rozpočet.
+
+| | video (Wan / LTX) | 3D (GLB) |
+|---|---|---|
+| práce na figurku | 9 klipů: strojový čas + výběr ze seedů | obrázek → 3D, řezání na díly, export – hlavně ruční práce |
+| otáčení tahem | ne, jeden úhel | ano |
+| pohyb | měkký a „živý"; kvalita kolísá podle seedu | přesný, u všech figurek stejný |
+| sestava z dílů | klip z rozloženého pohledu, výsledek nejistý | animace `assemble` |
+| zvuk | LTX ho vyrobí s klipem | zvlášť |
+| velikost sbírky | ~75 MB | ~56 MB |
+| hlavní riziko | tvary během klipu „tečou", klipy téže figurky se liší | pracnost a kvalita sítí |
+
 ## 7. Milníky
 
 Každý milník = samostatný commit(y), zelené `dart test`, `dart analyze`, `flutter test`.
@@ -383,14 +417,22 @@ Každý milník = samostatný commit(y), zelené `dart test`, `dart analyze`, `f
 - [ ] import, stíny, kontrola v galerii
 - Hotovo, když: každá karta a každý mutant má obrázek a hra nikde neukazuje zástupnou dlaždici.
 
+**M3b – Video pilot** (člověk generuje a boduje, Opus zapojuje)
+- [ ] 2 figurky × 8 klipů ve Wan i LTX podle `03-WAN_LTX_ANIMACE.md`, vyplněný `Prompts/video/srovnani.csv`
+- [ ] `pack_clips.py`, `ClipFigure`
+- Hotovo, když: je vybraná konfigurace se změřenou cenou použitelného klipu a obě pilotní figurky
+  předvádějí pohyby v revealu z klipů.
+
 **M4 – 3D pilot** (rozhodovací bod)
 - [ ] 2 figurky celou cestou §6.3 (`zralomedved`, `drakobot`)
 - [ ] `build_figure.py`, `validate_glb`, 6 základních pohybů
 - [ ] spike rendererů §6.4, `GlbFigure`
 - Hotovo, když: obě figurky běží v revealu na iOS, Androidu i macOS a je změřeno, kolik práce stojí
-  jedna figurka. **Tady se rozhodne**, jestli a jak rychle převádět zbylých 26.
+  jedna figurka. **Tady se rozhodne** mezi videem (M3b) a 3D: zůstat u klipů, převést všech 28 do 3D,
+  nebo dát 3D jen vybraným figurkám.
 
-**M5 – 3D výroba** – figurky po vlnách (rod po rodu), celý pohybový slovník, částice živlů.
+**M5 – Výroba pohybů** podle rozhodnutí z M4 – figurky po vlnách (rod po rodu), celý pohybový slovník,
+částice živlů.
 
 **M6 – Dotažení** – aura pečeti a slizový lesk žolíka, zvuky pohybů, obrázek/video figurky ke sdílení.
 
@@ -407,6 +449,7 @@ Plán s nimi počítá takhle; změna kteréhokoli je levná před M1, drahá po
 5. **Figurky stojí vzpřímeně** (dvounohý postoj) – lépe vyplní displej na výšku.
 6. **Kloubová figurka z pevných dílů** místo měkkého riggingu.
 7. **Jména mutantů** v `collection.json`.
+8. **Pohyby videem, nebo ve 3D** – neřeší se teď; rozhodnou piloty M3b a M4.
 
 ## 9. Pracovní pravidla pro implementaci
 
@@ -415,6 +458,6 @@ Plán s nimi počítá takhle; změna kteréhokoli je levná před M1, drahá po
   chybí, musí fungovat zástupce.
 - `collection.json`, `moves.json` a `Prompts/qwen/bible.json` jsou data: měnit je jen s důvodem a po
   změně receptů spustit `python3 Prompts/qwen/build_prompts.py`.
-- M4 a dál nezačínat bez výslovného pokynu.
+- M3b a dál nezačínat bez výslovného pokynu.
 - Po každém milníku aktualizovat `README.md`, `mutant_core/README.md`, `app/README.md` a odškrtnout
   položky tady.

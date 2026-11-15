@@ -1,0 +1,291 @@
+{
+  "_comment": "Zdroj pro Prompts/video/build_video_prompts.py. Uprav text pohybu nebo společné bloky tady a spusť generátor znovu.",
+  "settings": {
+    "wan": {
+      "model": "Wan 2.2 I2V-A14B",
+      "width": 768,
+      "height": 768,
+      "fps": 16,
+      "frames": {
+        "move": 49,
+        "idle": 65,
+        "assemble": 49
+      }
+    },
+    "ltx": {
+      "model": "LTX-2.5",
+      "width": 768,
+      "height": 768,
+      "fps": 24,
+      "frames": {
+        "move": 73,
+        "idle": 97,
+        "assemble": 73
+      }
+    }
+  },
+  "wan": {
+    "intro": "A collectible vinyl toy monster figure stands on a plain light-grey studio background.",
+    "lock": "The toy stays on the same spot and ends in exactly the same pose as it started. Static shot, fixed camera, no zoom, no pan, no cut. The plain light-grey background and the soft even lighting do not change.",
+    "lock_assemble": "Static shot, fixed camera, no zoom, no pan, no cut. The plain light-grey background and the soft even lighting do not change.",
+    "negative": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，畸形的，毁容的，形态畸形的肢体，静止不动的画面，杂乱的背景，镜头移动，镜头推拉，变焦，物体变形，融化，多余的肢体，多余的头，新出现的物体，文字",
+    "negative_default": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+    "intro_assemble": "The separate parts of a collectible vinyl toy monster figure lie apart on a plain light-grey studio background."
+  },
+  "ltx": {
+    "intro": "Static frame. Stop-motion style toy animation of a collectible vinyl toy monster figure standing on a seamless light-grey studio background in soft even light.",
+    "lock": "The camera is locked off and never moves or zooms, the background stays plain and empty, and the toy ends in exactly the same pose as it started.",
+    "lock_assemble": "The camera is locked off and never moves or zooms, and the background stays plain and empty.",
+    "audio": "Audio: {sound}, no music, no speech.",
+    "negative": "shaky, glitchy, low quality, worst quality, deformed, distorted, disfigured, motion smear, motion artifacts, morphing, melting, extra limbs, camera movement, zoom, cut, transition, text, music, speech",
+    "intro_assemble": "Static frame. Stop-motion style toy animation: the separate parts of a collectible vinyl toy monster figure lie apart on a seamless light-grey studio background in soft even light."
+  },
+  "rigid": "Its parts are rigid plastic pieces that rotate at their ball joints like a stop-motion toy; they never bend, stretch, melt or change shape, and no new parts appear.",
+  "scope": {
+    "part": "Only that part moves; the rest of the toy stays still.",
+    "body": "The whole toy moves together and keeps its shape."
+  },
+  "moves": {
+    "roar": {
+      "scope": "part",
+      "sound": "a short cute cartoon roar",
+      "motion": "The toy tilts its {part} back, opens its mouth wide and lets out a roar while the head shakes slightly, then closes its mouth and lowers the head back."
+    },
+    "howl": {
+      "scope": "part",
+      "sound": "a small wolf howl",
+      "motion": "The toy lifts its {part} to point straight up, opens its mouth and howls, then lowers the head back."
+    },
+    "chomp": {
+      "scope": "part",
+      "sound": "two hollow plastic clacks of teeth",
+      "motion": "The toy leans its {part} forward and snaps its jaws open and shut twice, then pulls the head back."
+    },
+    "headspin": {
+      "scope": "part",
+      "sound": "a ratcheting plastic click as the head turns",
+      "motion": "The toy turns its {part} smoothly all the way around in one full circle on the neck joint, blinks once, and faces forward again."
+    },
+    "headbutt": {
+      "scope": "part",
+      "sound": "a soft plastic thud",
+      "motion": "The toy lowers its {part}, thrusts it forward in one quick butt, then lifts the head back up."
+    },
+    "scan": {
+      "scope": "part",
+      "sound": "soft electronic beeps",
+      "motion": "The toy turns its {part} slowly to the left and then to the right while its big eyes flicker with light, then faces forward again."
+    },
+    "hide": {
+      "scope": "body",
+      "sound": "a hollow plastic clunk, then a pop",
+      "motion": "The toy pulls its head, arms and legs in toward its {part} until they are tucked tightly against the body, holds for a moment, then pops them back out."
+    },
+    "puff": {
+      "scope": "body",
+      "sound": "a deep breath in and a long breath out",
+      "motion": "The toy leans back and pushes its {part} proudly forward and up as if taking a huge breath, holds for a moment, then relaxes back."
+    },
+    "wobble": {
+      "scope": "body",
+      "sound": "a soft plastic rattle",
+      "motion": "The toy rocks its {part} from side to side three times like a wobbling toy, then settles upright."
+    },
+    "snap": {
+      "scope": "part",
+      "sound": "two sharp plastic clicks",
+      "motion": "The toy raises both {part} in front of its chest and snaps them open and shut twice, then lowers them back to its sides."
+    },
+    "slash": {
+      "scope": "part",
+      "sound": "two quick whooshes",
+      "motion": "The toy raises both {part} and swipes them downward one after the other in two quick slashes, then lowers them back to its sides."
+    },
+    "drill": {
+      "scope": "part",
+      "sound": "a small electric drill whirring",
+      "motion": "The toy points both {part} forward and the drill bits spin fast for a moment, then stop, and the arms lower back to its sides."
+    },
+    "clap": {
+      "scope": "part",
+      "sound": "three wet slapping claps",
+      "motion": "The toy brings both {part} together in front of its belly and claps them three times, then lowers them back to its sides."
+    },
+    "pound": {
+      "scope": "part",
+      "sound": "four hollow drum thumps on plastic",
+      "motion": "The toy raises both {part} and drums its fists on its chest four times, then lowers them back to its sides."
+    },
+    "hop": {
+      "scope": "body",
+      "sound": "a springy boing and a plastic thud on landing",
+      "motion": "The toy crouches on its {part}, springs straight up into the air in one hop, lands on the same spot with a small bounce, and stands still again."
+    },
+    "stomp": {
+      "scope": "body",
+      "sound": "two heavy plastic thuds",
+      "motion": "The toy lifts one of its {part} and stomps it down, then does the same with the other, and stands still again."
+    },
+    "roll": {
+      "scope": "body",
+      "sound": "a small toy motor hum and rattling treads",
+      "motion": "The toy rolls a short way forward on its {part} with the treads turning, then rolls back to exactly where it started and stops."
+    },
+    "scuttle": {
+      "scope": "body",
+      "sound": "quick light plastic tapping",
+      "motion": "The toy takes three quick small steps to the side on its {part}, then three quick steps back to exactly where it started."
+    },
+    "whip": {
+      "scope": "part",
+      "sound": "a whoosh and a sharp snap",
+      "motion": "The toy swings its {part} out to one side and cracks it like a whip, then lets it settle back behind the body."
+    },
+    "sting": {
+      "scope": "part",
+      "sound": "a quick whoosh and a tiny ping",
+      "motion": "The toy curls its {part} up over its shoulder and jabs the stinger forward once, then curls it back behind the body."
+    },
+    "smash": {
+      "scope": "part",
+      "sound": "one heavy thud",
+      "motion": "The toy lifts its {part} high and slams the club down on the ground behind it, then lifts it back to where it was."
+    },
+    "fan": {
+      "scope": "part",
+      "sound": "a soft rustle like a paper fan opening",
+      "motion": "The toy folds its {part} halfway closed, then spreads it wide open again into a full fan and shimmers the feathers."
+    },
+    "wag": {
+      "scope": "part",
+      "sound": "soft quick swishing",
+      "motion": "The toy wags its {part} quickly from side to side four times, then lets it settle back behind the body."
+    },
+    "splash": {
+      "scope": "part",
+      "sound": "two wet slaps",
+      "motion": "The toy lifts its {part} and slaps it down flat on the ground twice, then lifts it back to where it was."
+    },
+    "hover": {
+      "scope": "body",
+      "sound": "a soft buzzing flutter",
+      "motion": "The toy beats its {part} very fast, rises a little off the ground and hovers for a moment, then sinks back down onto the same spot and the wings stop."
+    },
+    "flap": {
+      "scope": "part",
+      "sound": "three soft whooshes of wings",
+      "motion": "The toy flaps its {part} down and up three times in big slow beats, then holds them open as before."
+    },
+    "charge": {
+      "scope": "body",
+      "sound": "a short rumble and a thud",
+      "motion": "The toy leans forward to point its {part} ahead, makes one short charging lunge forward, then steps back to exactly where it started and straightens up."
+    },
+    "slice": {
+      "scope": "body",
+      "sound": "two clean swishes",
+      "motion": "The toy leans to the left and then to the right so that its {part} sweeps through the air like a fin cutting water, then straightens up."
+    },
+    "beam": {
+      "scope": "part",
+      "sound": "rising radio beeps",
+      "motion": "The dish of its {part} spins around twice while its little light blinks, then stops in the starting position."
+    },
+    "bristle": {
+      "scope": "part",
+      "sound": "a crackle of ice",
+      "motion": "The toy shivers and its {part} flare outward and sparkle, then settle back to how they were."
+    }
+  },
+  "clips": {
+    "idle": {
+      "kind": "idle",
+      "label": "klid (smyčka)",
+      "sound": "quiet room tone and a faint plastic creak",
+      "motion": "The toy stands in place and breathes gently: its body rises and falls slightly, it blinks once and its tail sways a little. Nothing else happens."
+    },
+    "cheer": {
+      "kind": "move",
+      "label": "radost",
+      "sound": "a happy little squeak and a plastic thud on landing",
+      "motion": "The toy throws both arms up, does one small happy hop on the spot with its mouth open in a cheer, lands, and lowers its arms back to its sides."
+    },
+    "assemble": {
+      "kind": "assemble",
+      "label": "sestava",
+      "sound": "a series of satisfying plastic clicks as each part snaps on",
+      "motion": "The loose parts slide toward the body one after another and snap onto their ball joints: first the legs, then the arms, the tail, the back attachment and finally the head. The finished toy stands upright in its final pose and holds still."
+    }
+  },
+  "part_fx": {
+    "head_dragon": "A small puff of grey smoke drifts from its nostrils.",
+    "torso_dragon": "The orange belly plate glows brighter while it holds the pose.",
+    "torso_shadow_dragon": "The violet belly plate glows brighter while it holds the pose.",
+    "torso_stegosaurus": "The plates along its back stand up straighter while it holds the pose.",
+    "back_phoenix": "Small orange flames flicker around its feet during the jump.",
+    "front_trex": "The arms are comically short, so the slashes are tiny."
+  },
+  "part_noun": {
+    "head_trex": "T-rex head",
+    "head_shark": "shark head",
+    "head_owl": "owl head",
+    "head_triceratops": "triceratops head",
+    "head_fly": "fly head",
+    "head_wolf": "wolf head",
+    "head_dragon": "dragon head",
+    "head_robot": "robot head",
+    "head_deer": "deer head",
+    "head_spider": "spider head",
+    "torso_turtle": "turtle shell body",
+    "torso_polar_bear": "polar bear belly",
+    "torso_beetle": "beetle shell body",
+    "torso_stegosaurus": "stegosaurus body",
+    "torso_dragon": "dragon chest",
+    "torso_robot": "robot torso",
+    "torso_penguin": "penguin belly",
+    "torso_octopus": "octopus body",
+    "torso_parrot": "parrot chest",
+    "torso_shadow_dragon": "dark dragon body",
+    "front_crab": "crab claws",
+    "front_mantis": "mantis forelegs",
+    "front_trex": "tiny T-rex arms",
+    "front_drill": "drill arms",
+    "front_eagle": "eagle talon arms",
+    "front_submarine": "metal grabber arms",
+    "front_dragon": "dragon forepaws",
+    "front_walrus": "walrus flippers",
+    "front_raptor": "raptor arms",
+    "front_gorilla": "gorilla arms",
+    "back_forest_dragon": "dragon legs",
+    "back_grasshopper": "grasshopper legs",
+    "back_phoenix": "phoenix legs",
+    "back_brontosaurus": "brontosaurus legs",
+    "back_tracks": "tank tracks",
+    "back_dragon": "dragon legs",
+    "back_crab": "crab legs",
+    "back_hare": "hare legs",
+    "back_heron": "long heron legs",
+    "back_spider": "spider legs",
+    "tail_metal": "metal tail",
+    "tail_scorpion": "scorpion tail",
+    "tail_fish": "fish tail",
+    "tail_ankylosaurus": "club tail",
+    "tail_peacock": "peacock tail",
+    "tail_fox": "fox tail",
+    "tail_ice_dragon": "icy dragon tail",
+    "tail_whale": "whale tail",
+    "tail_ninja_robot": "thin robot tail",
+    "tail_swallow": "forked swallow tail",
+    "extra_dragonfly": "dragonfly wings",
+    "extra_bat": "bat wings",
+    "extra_dragon": "dragon wings",
+    "extra_eagle": "eagle wings",
+    "extra_rhino": "rhino horn",
+    "extra_shark_fin": "shark fin",
+    "extra_antenna": "radar antenna",
+    "extra_pterodactyl": "pterodactyl wings",
+    "extra_ice_spikes": "ice spikes",
+    "extra_butterfly": "butterfly wings"
+  },
+  "rigid_assemble": "The parts are rigid plastic pieces; they never bend, stretch, melt or change shape, and no new parts appear."
+}

@@ -6,6 +6,7 @@ a skládají z nich mutanta; hotový tvor se uloží do bestiáře. Nikdo neproh
 - [`Prompts/00-PLAN_MUTANT.md`](Prompts/00-PLAN_MUTANT.md) – plán hry, pravidla a fáze
 - [`Prompts/01-PLAN_KOLEKCE.md`](Prompts/01-PLAN_KOLEKCE.md) – další krok: uzavřená sbírka 28 mutantů a 3D figurky
 - [`Prompts/02-QWEN_IMAGE_PROMPTS.md`](Prompts/02-QWEN_IMAGE_PROMPTS.md) – prompty pro Qwen Image (figurky, karty, kulisy)
+- [`Prompts/03-WAN_LTX_ANIMACE.md`](Prompts/03-WAN_LTX_ANIMACE.md) – prompty pro Wan a LTX (pohyby figurek) a postup srovnání animací
 - [`mutant_core/`](mutant_core/) – herní logika v čistém Dartu: karty, engine, pravidla, boti, CLI simulace
 - [`app/`](app/) – Flutter prototyp (Fáze 1): stůl, ruka, líhnutí, bestiář, puppet mode a DebugPanel
 
