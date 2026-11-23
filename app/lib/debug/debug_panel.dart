@@ -7,6 +7,7 @@ import '../host/local_host.dart';
 import '../host/seat.dart';
 import '../theme.dart';
 import '../ui/labels.dart';
+import 'gallery_screen.dart';
 import 'scenarios.dart';
 
 /// Puppet-mode DebugPanel (PLAN §6.2), opened from the table's tune button.
@@ -25,6 +26,8 @@ class _DebugPanelState extends State<DebugPanel> {
   String? _giveDefId;
   int _passFrom = 1;
   int _passTo = 0;
+  String? _hatchMutantId;
+  bool _hatchHalfBaked = false;
 
   GameHost get host => widget.host;
 
@@ -65,6 +68,8 @@ class _DebugPanelState extends State<DebugPanel> {
           builder: (context, _) {
             final state = host.state;
             final seatCount = host.seats.length;
+            final collectionMode =
+                host.rules.closedCollection && host.engine.collection != null;
             final giveSeat = math.min(_giveSeat, seatCount - 1);
             final passFrom = math.min(_passFrom, seatCount - 1);
             final passTo = math.min(_passTo, seatCount - 1);
@@ -136,7 +141,8 @@ class _DebugPanelState extends State<DebugPanel> {
                       host.debug((ts) => DebugSetIncubator(ts, frozen: v)),
                 ),
                 _LabeledSlider(
-                  label: 'Drain ${state.drainPerSec.toStringAsFixed(2)} za sekundu',
+                  label:
+                      'Drain ${state.drainPerSec.toStringAsFixed(2)} za sekundu',
                   value: state.drainPerSec,
                   max: 6,
                   divisions: 24,
@@ -226,7 +232,7 @@ class _DebugPanelState extends State<DebugPanel> {
                       : () => host.giveCard(giveSeat, _giveDefId!),
                   child: const Text('Dát kartu'),
                 ),
-                const _Section('Předání a fúze'),
+                _Section(collectionMode ? 'Předání' : 'Předání a fúze'),
                 Row(
                   children: [
                     const Text('Od'),
@@ -244,18 +250,65 @@ class _DebugPanelState extends State<DebugPanel> {
                       : () => _simulatePass(passFrom, passTo),
                   child: const Text('Simulovat předání'),
                 ),
-                const SizedBox(height: 8),
-                FilledButton.tonal(
-                  onPressed: seatCount < 2 ? null : _forceFusion,
-                  child: const Text('Vynutit fúzi'),
-                ),
+                if (!collectionMode) ...[
+                  const SizedBox(height: 8),
+                  FilledButton.tonal(
+                    onPressed: seatCount < 2 ? null : _forceFusion,
+                    child: const Text('Vynutit fúzi'),
+                  ),
+                ],
                 const SizedBox(height: 8),
                 FilledButton.tonal(
                   onPressed: () => host.debug((ts) => DebugHatchNow(ts)),
                   child: const Text('Vylíhnout teď'),
                 ),
+                if (collectionMode) ...[
+                  const _Section('Vylíhni mutanta…'),
+                  DropdownButton<String>(
+                    isExpanded: true,
+                    value: _hatchMutantId,
+                    hint: const Text('vyber mutanta'),
+                    items: [
+                      for (final m in host.engine.collection!.mutants)
+                        DropdownMenuItem(value: m.id, child: Text(m.name)),
+                    ],
+                    onChanged: (id) => setState(() => _hatchMutantId = id),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Nedopečený'),
+                    value: _hatchHalfBaked,
+                    onChanged: (v) => setState(() => _hatchHalfBaked = v),
+                  ),
+                  FilledButton.tonal(
+                    onPressed: _hatchMutantId == null
+                        ? null
+                        : () {
+                            host.debug(
+                              (ts) => DebugHatchMutant(
+                                ts,
+                                _hatchMutantId!,
+                                premature: _hatchHalfBaked,
+                              ),
+                            );
+                            Navigator.of(context).pop();
+                          },
+                    child: const Text('Vylíhnout'),
+                  ),
+                ],
+                const _Section('Grafika'),
+                FilledButton.tonal(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => GalleryScreen(engine: host.engine),
+                    ),
+                  ),
+                  child: const Text('Galerie karet a figurek'),
+                ),
                 const _Section('Scénáře'),
-                for (final scenario in scenarios)
+                for (final scenario in scenarios.where(
+                  (s) => s.collection == null || s.collection == collectionMode,
+                ))
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(scenario.name),
@@ -293,10 +346,7 @@ class _Section extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: 22, bottom: 6),
-      child: Text(
-        title,
-        style: fredoka(17, 600, color: MutantColors.hint),
-      ),
+      child: Text(title, style: fredoka(17, 600, color: MutantColors.hint)),
     );
   }
 }

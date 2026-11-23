@@ -9,7 +9,7 @@ a skládají z nich mutanta; hotový tvor se uloží do bestiáře. Nikdo neproh
 - [`Prompts/02-QWEN_IMAGE_PROMPTS.md`](Prompts/02-QWEN_IMAGE_PROMPTS.md) – prompty pro Qwen Image (figurky, karty, kulisy)
 - [`Prompts/03-WAN_LTX_ANIMACE.md`](Prompts/03-WAN_LTX_ANIMACE.md) – prompty pro Wan a LTX (pohyby figurek) a postup srovnání animací
 - [`mutant_core/`](mutant_core/) – herní logika v čistém Dartu: karty, engine, pravidla, boti, CLI simulace
-- [`app/`](app/) – Flutter prototyp (Fáze 1): stůl, ruka, líhnutí, bestiář, puppet mode a DebugPanel
+- [`app/`](app/) – Flutter aplikace: stůl se sbírkou 28 mutantů, „Kdo to bude?", reveal figurky, sbírka, puppet mode a DebugPanel
 
 ```bash
 cd mutant_core

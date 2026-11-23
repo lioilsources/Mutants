@@ -5,6 +5,7 @@ import '../../host/seat.dart';
 import '../../services/bestiary_store.dart';
 import '../../theme.dart';
 import '../bestiary/bestiary_screen.dart';
+import '../collection/collection_screen.dart';
 import '../table/table_screen.dart';
 
 class SetupScreen extends StatefulWidget {
@@ -19,7 +20,7 @@ class SetupScreen extends StatefulWidget {
 
 class _SetupScreenState extends State<SetupScreen> {
   final _seats = [SeatMode.human, SeatMode.careful, SeatMode.passer];
-  bool _planRules = false;
+  _Rules _rules = _Rules.collection;
 
   void _play() {
     Navigator.of(context).push(
@@ -28,7 +29,11 @@ class _SetupScreenState extends State<SetupScreen> {
           engine: widget.engine,
           store: widget.store,
           seats: List.of(_seats),
-          rules: _planRules ? RulesConfig.v1 : const RulesConfig(),
+          rules: switch (_rules) {
+            _Rules.collection => const RulesConfig(),
+            _Rules.free => RulesConfig.free,
+            _Rules.v1 => RulesConfig.v1,
+          },
         ),
       ),
     );
@@ -37,8 +42,9 @@ class _SetupScreenState extends State<SetupScreen> {
   void _openBestiary() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) =>
-            BestiaryScreen(store: widget.store, engine: widget.engine),
+        builder: (_) => widget.engine.collection != null
+            ? CollectionScreen(store: widget.store, engine: widget.engine)
+            : BestiaryScreen(store: widget.store, engine: widget.engine),
       ),
     );
   }
@@ -85,22 +91,27 @@ class _SetupScreenState extends State<SetupScreen> {
                 const SizedBox(height: 24),
                 Text('Pravidla', style: text.titleMedium),
                 const SizedBox(height: 10),
-                SegmentedButton<bool>(
+                SegmentedButton<_Rules>(
                   segments: const [
-                    ButtonSegment(value: false, label: Text('Doporučená')),
-                    ButtonSegment(value: true, label: Text('Plán v1')),
+                    ButtonSegment(
+                      value: _Rules.collection,
+                      label: Text('Sbírka'),
+                    ),
+                    ButtonSegment(value: _Rules.free, label: Text('Volné')),
+                    ButtonSegment(value: _Rules.v1, label: Text('Plán v1')),
                   ],
-                  selected: {_planRules},
-                  onSelectionChanged: (s) =>
-                      setState(() => _planRules = s.first),
+                  selected: {_rules},
+                  onSelectionChanged: (s) => setState(() => _rules = s.first),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  _planRules
-                      ? 'Pět karet, po každém hodu se dobírá, inkubátor chladne rychle.'
-                      : 'Kotlík rozdává kartu každých 6 sekund, jeden mutant trvá asi minutu.',
-                  style: text.bodySmall,
-                ),
+                Text(switch (_rules) {
+                  _Rules.collection =>
+                    'Stavíte jednoho z 28 mutantů sbírky. Díl, který k němu nepasuje, se vrátí do ruky.',
+                  _Rules.free =>
+                    'Libovolných šest dílů, fúze a pahýly jako ve Fázi 1.',
+                  _Rules.v1 =>
+                    'Volné skládání, pět karet, po každém hodu se dobírá, inkubátor chladne rychle.',
+                }, style: text.bodySmall),
                 const SizedBox(height: 40),
                 FilledButton(
                   onPressed: _play,
@@ -118,7 +129,11 @@ class _SetupScreenState extends State<SetupScreen> {
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(52),
                     ),
-                    child: Text('Bestiář (${widget.store.bestiary.length})'),
+                    child: Text(switch (widget.engine.collection) {
+                      final c? =>
+                        'Sbírka (${CollectionProgress(c, widget.store.bestiary).owned} / ${c.length})',
+                      null => 'Bestiář (${widget.store.bestiary.length})',
+                    }),
                   ),
                 ),
               ],
@@ -129,6 +144,8 @@ class _SetupScreenState extends State<SetupScreen> {
     );
   }
 }
+
+enum _Rules { collection, free, v1 }
 
 class _SeatRow extends StatelessWidget {
   const _SeatRow({

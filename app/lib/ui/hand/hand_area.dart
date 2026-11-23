@@ -127,11 +127,12 @@ class _DraggableCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final def = host.catalog[host.state.defIdOf(card)];
-    Widget face({bool dimmed = false}) => CardFace(
+    Widget face({bool dimmed = false, bool glow = false}) => CardFace(
       def: def,
       catalog: host.catalog,
       width: HandArea.cardWidth,
       dimmed: dimmed,
+      glow: glow,
     );
     return Draggable<HeldCard>(
       data: (seat: seat, card: card),
@@ -139,7 +140,8 @@ class _DraggableCard extends StatelessWidget {
       onDragEnd: (details) {
         host.viewLocked = false;
         // A flick upwards that didn't reach the board still throws.
-        if (!details.wasAccepted && details.velocity.pixelsPerSecond.dy < -900) {
+        if (!details.wasAccepted &&
+            details.velocity.pixelsPerSecond.dy < -900) {
           host.throwCard(seat, card);
         }
       },
@@ -148,7 +150,7 @@ class _DraggableCard extends StatelessWidget {
         child: Transform.scale(scale: 1.08, child: face()),
       ),
       childWhenDragging: Opacity(opacity: 0.2, child: face()),
-      child: face(dimmed: !fits),
+      child: face(dimmed: !fits, glow: fits),
     );
   }
 }

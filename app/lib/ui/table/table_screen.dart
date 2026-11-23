@@ -9,9 +9,11 @@ import '../../host/seat.dart';
 import '../../launch_options.dart';
 import '../../services/bestiary_store.dart';
 import '../bestiary/bestiary_screen.dart';
+import '../collection/collection_screen.dart';
 import '../hand/hand_area.dart';
 import '../hand/incoming_passes.dart';
 import '../hatch/hatch_overlay.dart';
+import '../reveal/reveal_overlay.dart';
 import 'event_messages.dart';
 import 'event_toast.dart';
 import 'hazard_banner.dart';
@@ -76,7 +78,11 @@ class _TableScreenState extends State<TableScreen> {
   void _onEvent(GameEvent event) {
     if (!mounted) return;
     if (event is CreatureHatched && widget.demo) {
-      _timers.add(Timer(const Duration(seconds: 5), host.acknowledgeHatch));
+      // The reveal runs ~13 s; the plain card is read in 5.
+      final reveal = event.record.mutantId != null;
+      _timers.add(
+        Timer(Duration(seconds: reveal ? 16 : 5), host.acknowledgeHatch),
+      );
     }
     final message = messageFor(event, host);
     if (message == null) return;
@@ -95,8 +101,9 @@ class _TableScreenState extends State<TableScreen> {
     host.setPaused(true);
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) =>
-            BestiaryScreen(store: widget.store, engine: widget.engine),
+        builder: (_) => widget.engine.collection != null
+            ? CollectionScreen(store: widget.store, engine: widget.engine)
+            : BestiaryScreen(store: widget.store, engine: widget.engine),
       ),
     );
     host.setPaused(wasPaused);
@@ -155,12 +162,23 @@ class _TableScreenState extends State<TableScreen> {
             ),
             if (host.pendingHatch case final record?)
               Positioned.fill(
-                child: HatchOverlay(
-                  key: ValueKey(record.id),
-                  record: record,
-                  host: host,
-                  store: widget.store,
-                ),
+                child: switch (widget.engine.collection?.tryGet(
+                  record.mutantId ?? '',
+                )) {
+                  final mutant? => RevealOverlay(
+                    key: ValueKey(record.id),
+                    record: record,
+                    mutant: mutant,
+                    host: host,
+                    store: widget.store,
+                  ),
+                  null => HatchOverlay(
+                    key: ValueKey(record.id),
+                    record: record,
+                    host: host,
+                    store: widget.store,
+                  ),
+                },
               ),
           ],
         ),
@@ -218,7 +236,7 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: 'Bestiář',
+            tooltip: 'Sbírka',
             onPressed: onBestiary,
             icon: const Icon(Icons.menu_book_rounded),
           ),
@@ -278,6 +296,7 @@ class _TableArea extends StatelessWidget {
           child: Column(
             children: [
               HazardBanner(host: host),
+              CandidateStrip(host: host),
               Expanded(
                 child: DragTarget<HeldCard>(
                   onAcceptWithDetails: (details) =>

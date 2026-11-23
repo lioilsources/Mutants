@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mutant_core/mutant_core.dart';
 
+import '../../services/game_assets.dart';
 import '../../theme.dart';
 import '../widgets/pill.dart';
 
@@ -12,6 +13,7 @@ class CardFace extends StatelessWidget {
     required this.catalog,
     this.width = 100,
     this.dimmed = false,
+    this.glow = false,
   });
 
   final CardDef def;
@@ -21,13 +23,28 @@ class CardFace extends StatelessWidget {
   /// Nowhere to put it right now.
   final bool dimmed;
 
+  /// Fits right now – the card lights up.
+  final bool glow;
+
   static double heightFor(double width) => width * 1.38;
+
+  /// Mutagen = wildcard: slime green, stands in for any part of its slot.
+  static const _slime = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFB8F36B), Color(0xFF52D8A0), Color(0xFF9F7BEA)],
+  );
+
+  bool get wild => def.kind == CardKind.mutation;
 
   @override
   Widget build(BuildContext context) {
-    final on = MutantColors.onElement(def.element);
+    final on = wild ? MutantColors.ink : MutantColors.onElement(def.element);
+    final image = def.kind == CardKind.part
+        ? GameAssets.instance.art.card(def.id)
+        : null;
     final kind = switch (def.kind) {
-      CardKind.mutation => 'mutace',
+      CardKind.mutation => 'žolík',
       CardKind.seal => 'pečeť',
       _ => null,
     };
@@ -39,14 +56,24 @@ class CardFace extends StatelessWidget {
         height: heightFor(width),
         padding: EdgeInsets.all(width * 0.08),
         decoration: BoxDecoration(
-          color: MutantColors.element(def.element),
+          color: wild ? null : MutantColors.element(def.element),
+          gradient: wild ? _slime : null,
           borderRadius: BorderRadius.circular(width * 0.13),
+          border: glow
+              ? Border.all(color: MutantColors.hint, width: width * 0.035)
+              : null,
           boxShadow: [
             BoxShadow(
               color: MutantColors.ink.withValues(alpha: 0.45),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
+            if (glow)
+              BoxShadow(
+                color: MutantColors.hint.withValues(alpha: 0.55),
+                blurRadius: 16,
+                spreadRadius: 1,
+              ),
           ],
         ),
         child: Column(
@@ -65,7 +92,12 @@ class CardFace extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 2),
                 child: Pill(kind, fontSize: width * 0.1),
               ),
-            const Spacer(),
+            if (image != null)
+              Expanded(
+                child: Center(child: Image.asset(image, fit: BoxFit.contain)),
+              )
+            else
+              const Spacer(),
             Text(
               def.name,
               maxLines: 3,

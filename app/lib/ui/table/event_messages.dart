@@ -14,11 +14,19 @@ String? messageFor(GameEvent event, GameHost host) {
     CardPlaced(kind: PlacementKind.fusion) => 'Fúze! Dvojitá část',
     CardPlaced(:final synchro) when synchro => 'Synchro! +25',
     CardPlaced(kind: PlacementKind.overwrite) => 'Mutace přepsala část',
+    CardPlaced(:final card)
+        when host.rules.closedCollection &&
+            catalog[host.state.defIdOf(card)].kind == CardKind.mutation =>
+      'Žolík zastoupil díl',
     CardPlaced(kind: PlacementKind.seal) => 'Pečeť změnila element tvora',
     CardBounced(:final player, :final reason) when player == viewed =>
-      reason == BounceReason.sealTaken
-          ? 'Pečeť už na trupu je'
-          : 'Tohle místo už je obsazené',
+      switch (reason) {
+        BounceReason.sealTaken => 'Pečeť už na trupu je',
+        BounceReason.slotOccupied => 'Tohle místo už je obsazené',
+        BounceReason.noFit => 'Tenhle díl k němu nepasuje',
+        BounceReason.wildLimit => 'Víc žolíků už se na něj nevejde',
+      },
+    EggEmpty() => 'Vejce bylo prázdné – zkusíme to znovu',
     CommandRejected(:final command, reason: RejectReason.onCooldown)
         when command is PassCard && command.from == viewed =>
       'Předávat jde jednou za ${host.rules.passCooldownMs ~/ 1000} sekundy',

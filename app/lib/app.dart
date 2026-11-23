@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:mutant_core/mutant_core.dart';
 
+import 'debug/gallery_screen.dart';
 import 'host/seat.dart';
 import 'launch_options.dart';
 import 'services/bestiary_store.dart';
 import 'theme.dart';
 import 'ui/bestiary/bestiary_screen.dart';
+import 'ui/collection/collection_screen.dart';
 import 'ui/setup/setup_screen.dart';
 import 'ui/table/table_screen.dart';
 
@@ -23,7 +25,13 @@ class MutantApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: buildMutantTheme(),
       home: switch (screen) {
-        'bestiary' => BestiaryScreen(store: store, engine: engine),
+        'bestiary' when engine.collection == null => BestiaryScreen(
+          store: store,
+          engine: engine,
+        ),
+        'gallery' => GalleryScreen(engine: engine),
+        'bestiary' ||
+        'collection' => CollectionScreen(store: store, engine: engine),
         _ when LaunchOptions.demo || screen == 'table' || screen == 'debug' =>
           TableScreen(
             engine: engine,

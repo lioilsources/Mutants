@@ -408,9 +408,9 @@ Každý milník = samostatný commit(y), zelené `dart test`, `dart analyze`, `f
 - Hotovo, když: cíle §4.5 platí pro 2–5 hráčů a staré testy běží beze změny chování.
 
 **M2 – Hra se sbírkou ve 2D** (`app`, bez nové grafiky)
-- [ ] stůl: vzpřímená silueta, „Kdo to bude?", odmítnutí, svítící karty v ruce
-- [ ] reveal se `StandeeFigure` (bez obrázku = jmenovka + barevný stín), sbírka 28 polic
-- [ ] debug: vylíhni mutanta, galerie; `import_art.py`
+- [x] stůl: vzpřímená silueta, „Kdo to bude?", odmítnutí, svítící karty v ruce
+- [x] reveal se `StandeeFigure` (bez obrázku = zástupná kloubová hračka z barev dílů), sbírka 28 polic
+- [x] debug: vylíhni mutanta, galerie; `import_art.py` (pozadí bez rembg: zaplavení šedého pozadí od okraje, `--remover rembg` volitelně)
 - Hotovo, když: partie s boty (`MUTANT_DEMO`) doběhne k revealu a zaplní sbírku; widget testy pro
   odmítnutí, kandidáty a stavy sbírky.
 

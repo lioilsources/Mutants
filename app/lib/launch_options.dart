@@ -4,7 +4,8 @@ abstract final class LaunchOptions {
   /// Skip setup: three bot seats with auto-follow; hatch cards close themselves.
   static const demo = bool.fromEnvironment('MUTANT_DEMO');
 
-  /// Start screen: `setup` (default), `table`, `debug` or `bestiary`.
+  /// Start screen: `setup` (default), `table`, `debug`, `bestiary`
+  /// (= `collection`) or `gallery`.
   static const screen = String.fromEnvironment('MUTANT_SCREEN');
 
   /// Game clock multiplier.
