@@ -3,6 +3,7 @@
 Kooperativní mobilní karetní hra pro děti. Hráči zároveň házejí karty s částmi zvířat do kotlíku
 a skládají z nich mutanta; hotový tvor se uloží do bestiáře. Nikdo neprohrává.
 
+- [`Prompts/HANDOFF.md`](Prompts/HANDOFF.md) – **kde se skončilo a čím pokračovat**
 - [`Prompts/00-PLAN_MUTANT.md`](Prompts/00-PLAN_MUTANT.md) – plán hry, pravidla a fáze
 - [`Prompts/01-PLAN_KOLEKCE.md`](Prompts/01-PLAN_KOLEKCE.md) – další krok: uzavřená sbírka 28 mutantů a 3D figurky
 - [`Prompts/02-QWEN_IMAGE_PROMPTS.md`](Prompts/02-QWEN_IMAGE_PROMPTS.md) – prompty pro Qwen Image (figurky, karty, kulisy)
