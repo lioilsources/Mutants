@@ -70,15 +70,33 @@ final class CardPlaced extends GameEvent {
       '${synchro ? ' synchro' : ''}${relay ? ' relay' : ''})';
 }
 
-enum BounceReason { slotOccupied, sealTaken }
+enum BounceReason {
+  /// „Tohle místo už je obsazené“.
+  slotOccupied,
+  sealTaken,
 
-/// Karta se odrazí zpět – stays in hand, no penalty.
+  /// Collection mode: „Tenhle díl k němu nepasuje“.
+  noFit,
+
+  /// Collection mode: too many wildcards on the creature.
+  wildLimit,
+}
+
+/// Karta se odrazí zpět – stays in hand, no penalty (or, with
+/// `RulesConfig.rejectToPot`, falls into the pot: [toPot]).
 final class CardBounced extends GameEvent {
-  const CardBounced(super.ts, {required this.player, required this.card, required this.reason});
+  const CardBounced(
+    super.ts, {
+    required this.player,
+    required this.card,
+    required this.reason,
+    this.toPot = false,
+  });
 
   final int player;
   final int card;
   final BounceReason reason;
+  final bool toPot;
 
   @override
   String toString() => 'Bounced(p$player #$card ${reason.name})';
@@ -92,18 +110,30 @@ final class SynchroUpgraded extends GameEvent {
   final int card;
 }
 
-enum IncubatorReason { throwBonus, synchro, catchBonus, hazardMet, hazardFailed }
+enum IncubatorReason {
+  throwBonus,
+  synchro,
+  catchBonus,
+  hazardMet,
+  hazardFailed,
+}
 
 /// Bonus/penalty jumps only; continuous drain is read from state.
 final class IncubatorChanged extends GameEvent {
-  const IncubatorChanged(super.ts, {required this.delta, required this.level, required this.reason});
+  const IncubatorChanged(
+    super.ts, {
+    required this.delta,
+    required this.level,
+    required this.reason,
+  });
 
   final double delta;
   final double level;
   final IncubatorReason reason;
 
   @override
-  String toString() => 'Incubator(${delta >= 0 ? '+' : ''}$delta → ${level.toStringAsFixed(1)} ${reason.name})';
+  String toString() =>
+      'Incubator(${delta >= 0 ? '+' : ''}$delta → ${level.toStringAsFixed(1)} ${reason.name})';
 }
 
 final class CardDrawn extends GameEvent {
@@ -122,7 +152,12 @@ final class CardReturned extends GameEvent {
 }
 
 final class HazardSurfaced extends GameEvent {
-  const HazardSurfaced(super.ts, {required this.card, required this.defId, required this.expiresAt});
+  const HazardSurfaced(
+    super.ts, {
+    required this.card,
+    required this.defId,
+    required this.expiresAt,
+  });
 
   final int card;
   final String defId;
@@ -133,7 +168,12 @@ final class HazardSurfaced extends GameEvent {
 }
 
 final class HazardResolved extends GameEvent {
-  const HazardResolved(super.ts, {required this.card, required this.defId, required this.met});
+  const HazardResolved(
+    super.ts, {
+    required this.card,
+    required this.defId,
+    required this.met,
+  });
 
   final int card;
   final String defId;
@@ -152,7 +192,13 @@ final class HazardCancelled extends GameEvent {
 }
 
 final class PassStarted extends GameEvent {
-  const PassStarted(super.ts, {required this.from, required this.to, required this.card, required this.expiresAt});
+  const PassStarted(
+    super.ts, {
+    required this.from,
+    required this.to,
+    required this.card,
+    required this.expiresAt,
+  });
 
   final int from;
   final int to;
@@ -161,7 +207,12 @@ final class PassStarted extends GameEvent {
 }
 
 final class PassCaught extends GameEvent {
-  const PassCaught(super.ts, {required this.from, required this.to, required this.card});
+  const PassCaught(
+    super.ts, {
+    required this.from,
+    required this.to,
+    required this.card,
+  });
 
   final int from;
   final int to;
@@ -170,7 +221,12 @@ final class PassCaught extends GameEvent {
 
 /// Nobody caught it in time – the card fell into the pot.
 final class PassDropped extends GameEvent {
-  const PassDropped(super.ts, {required this.from, required this.to, required this.card});
+  const PassDropped(
+    super.ts, {
+    required this.from,
+    required this.to,
+    required this.card,
+  });
 
   final int from;
   final int to;
@@ -183,5 +239,15 @@ final class CreatureHatched extends GameEvent {
   final CreatureRecord record;
 
   @override
-  String toString() => 'Hatched(${record.name}, ${record.rarity.name}${record.premature ? ', premature' : ''})';
+  String toString() =>
+      'Hatched(${record.name}, ${record.rarity.name}${record.premature ? ', premature' : ''})';
+}
+
+/// Collection mode: the incubator ran out before any part was placed.
+/// No record; a new round starts.
+final class EggEmpty extends GameEvent {
+  const EggEmpty(super.ts);
+
+  @override
+  String toString() => 'EggEmpty';
 }

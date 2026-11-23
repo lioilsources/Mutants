@@ -20,7 +20,8 @@ Usage: dart run mutant_core:sim [options]
   --session N          creatures per play session, 0 = one session (default 5)
 
 Rules (start from --rules, then override):
-  --rules NAME         default | v1 (the plan's original numbers)
+  --rules NAME         default (closed collection) | free (free assembly,
+                       phase-1 numbers) | v1 (the plan's original numbers)
   --hand N             starting hand (refill target with --refill true)
   --refill BOOL        refill the hand after every throw/pass
   --deal MS            pot deals a card every MS, 0 = off
@@ -30,6 +31,10 @@ Rules (start from --rules, then override):
   --chaos N            rarity chaos +1 per N distinct origins
   --mutation-overwrite BOOL
                        rarity mutation bonus only when a slot was overwritten
+  --fit-bias X         collection: chance a deal takes a fitting part (0–1)
+  --max-wild N         collection: wildcards allowed per creature
+  --reject BOOL        collection: rejected cards fall into the pot
+  --synchro-rare N     collection: rarity +1 from N synchro throws
 
   --sweep KEY=a,b,c    run once per value of any rule above (name without
                        dashes, e.g. deal=4000,6000 or chaos=3,5) and print a table
@@ -44,6 +49,10 @@ const _ruleKeys = [
   'drain-per-hatch',
   'chaos',
   'mutation-overwrite',
+  'fit-bias',
+  'max-wild',
+  'reject',
+  'synchro-rare',
 ];
 
 void main(List<String> arguments) {
@@ -79,6 +88,7 @@ void _run(List<String> arguments) {
 
   var rules = switch (args['rules'] ?? 'default') {
     'default' => const RulesConfig(),
+    'free' => RulesConfig.free,
     'v1' => RulesConfig.v1,
     final other => throw FormatException('Unknown rules "$other"'),
   };
@@ -107,16 +117,23 @@ void _run(List<String> arguments) {
     final eq = sweep.indexOf('=');
     final key = eq < 0 ? 'drain' : sweep.substring(0, eq);
     final values = (eq < 0 ? sweep : sweep.substring(eq + 1)).split(',');
-    _printSweep(engine, key, values, (value) => optionsFor(_withRule(rules, key, value.trim())));
+    _printSweep(
+      engine,
+      key,
+      values,
+      (value) => optionsFor(_withRule(rules, key, value.trim())),
+    );
     return;
   }
 
   final watch = Stopwatch()..start();
   final report = runSimulation(engine, optionsFor(rules));
   _printReport(report, engine.names, rules, session);
-  stdout.writeln('\n(${report.sessions} sessions, '
-      '${(report.simulatedMs / 60000).toStringAsFixed(1)} min simulated '
-      'in ${watch.elapsedMilliseconds} ms)');
+  stdout.writeln(
+    '\n(${report.sessions} sessions, '
+    '${(report.simulatedMs / 60000).toStringAsFixed(1)} min simulated '
+    'in ${watch.elapsedMilliseconds} ms)',
+  );
 }
 
 RulesConfig _withRule(RulesConfig r, String key, String value) => switch (key) {
@@ -127,7 +144,13 @@ RulesConfig _withRule(RulesConfig r, String key, String value) => switch (key) {
   'drain' => r.copyWith(drainPerSec: double.parse(value)),
   'drain-per-hatch' => r.copyWith(drainPerHatch: double.parse(value)),
   'chaos' => r.copyWith(chaosOriginsPerPoint: int.parse(value)),
-  'mutation-overwrite' => r.copyWith(mutationBonusNeedsOverwrite: _parseBool(value)),
+  'mutation-overwrite' => r.copyWith(
+    mutationBonusNeedsOverwrite: _parseBool(value),
+  ),
+  'fit-bias' => r.copyWith(fitDealBias: double.parse(value)),
+  'max-wild' => r.copyWith(maxWildPerCreature: int.parse(value)),
+  'reject' => r.copyWith(rejectToPot: _parseBool(value)),
+  'synchro-rare' => r.copyWith(raritySynchroThreshold: int.parse(value)),
   _ => throw FormatException('Unknown rule "$key"'),
 };
 
@@ -176,7 +199,9 @@ void _printReport(
 
   stdout.writeln();
   if (r.truncated) {
-    stdout.writeln('⚠️  stopped early: a session hatched nothing within the time limit');
+    stdout.writeln(
+      '⚠️  stopped early: a session hatched nothing within the time limit',
+    );
   }
   stdout.writeln(
     '${_check(median >= 60000 && median <= 90000)} time per creature   '
@@ -192,6 +217,8 @@ void _printReport(
     '${_pct(r.rarePlusRate)}   target ~30 %',
   );
 
+  if (rules.closedCollection) _printCollection(r);
+
   stdout.writeln('\nRarity');
   final counts = r.rarityCounts;
   for (final rarity in Rarity.values) {
@@ -203,18 +230,26 @@ void _printReport(
     );
   }
 
-  stdout.writeln('\nHazards    surfaced ${r.hazardsSurfaced}, met ${r.hazardsMet}, '
-      'failed ${r.hazardsFailed}, cancelled by hatch ${r.hazardsCancelled} '
-      '→ met ${_pct(r.hazardMetRate)} of resolved');
-  stdout.writeln('Passes     sent ${r.passesSent}, caught ${r.passesCaught}, '
-      'dropped ${r.passesDropped} → caught ${_pct(r.passCatchRate)}; '
-      'relays ${r.relays}');
-  stdout.writeln('Throws     placed ${r.placements}, bounced ${r.bounces}; '
-      'synchro ${(r.synchroPlacements / n).toStringAsFixed(2)}/creature, '
-      'fusions ${r.fusions}, mutation overwrites ${r.mutations}');
+  stdout.writeln(
+    '\nHazards    surfaced ${r.hazardsSurfaced}, met ${r.hazardsMet}, '
+    'failed ${r.hazardsFailed}, cancelled by hatch ${r.hazardsCancelled} '
+    '→ met ${_pct(r.hazardMetRate)} of resolved',
+  );
+  stdout.writeln(
+    'Passes     sent ${r.passesSent}, caught ${r.passesCaught}, '
+    'dropped ${r.passesDropped} → caught ${_pct(r.passCatchRate)}; '
+    'relays ${r.relays}',
+  );
+  stdout.writeln(
+    'Throws     placed ${r.placements}, bounced ${r.bounces}; '
+    'synchro ${(r.synchroPlacements / n).toStringAsFixed(2)}/creature, '
+    'fusions ${r.fusions}, mutation overwrites ${r.mutations}',
+  );
 
   if (session > 1) {
-    stdout.writeln('\nBy creature # in session (drain ramps +${rules.drainPerHatch}/hatch)');
+    stdout.writeln(
+      '\nBy creature # in session (drain ramps +${rules.drainPerHatch}/hatch)',
+    );
     for (var i = 0; i < session; i++) {
       final d = r.durationsMs(indexInSession: i);
       if (d.isEmpty) continue;
@@ -230,6 +265,35 @@ void _printReport(
   }
 }
 
+void _printCollection(SimReport r) {
+  final counts = r.mutantCounts;
+  stdout.writeln(
+    '${_check(counts.length == 28)} distinct mutants  ${counts.length} / 28   target all 28',
+  );
+  stdout.writeln(
+    '${_check(r.topMutantShare <= 0.10)} most common      ${_pct(r.topMutantShare)}'
+    '   target ≤ 10 %',
+  );
+  final reasons = r.bouncesByReason.entries
+      .where((e) => e.value > 0)
+      .map((e) => '${e.key.name} ${e.value}')
+      .join(', ');
+  stdout.writeln(
+    '\nCollection rejected ${_pct(r.rejectRate)} of throws ($reasons); '
+    'empty eggs ${r.emptyEggs}; wildcards ${r.wildsPlaced}',
+  );
+  stdout.writeln(
+    '           candidates after card 1–5: '
+    '${[for (var k = 1; k <= 5; k++) r.candidatesAfter(k).toStringAsFixed(1)].join(' · ')}',
+  );
+  final decide = List.of(r.decideMs)..sort();
+  final build = List.of(r.buildMs)..sort();
+  stdout.writeln(
+    '           "co to bude?" median ${_sec(percentile(decide, 0.5))}, '
+    'dostavba median ${_sec(percentile(build, 0.5))}',
+  );
+}
+
 void _printSweep(
   MutantEngine engine,
   String key,
@@ -237,9 +301,11 @@ void _printSweep(
   SimOptions Function(String value) optionsFor,
 ) {
   stdout.writeln(
-    '\n ${key.padLeft(18)} │ median │ premature │ rare+  │ hazards met │ synchro/creature',
+    '\n ${key.padLeft(18)} │ median │ premature │ rare+  │ hazards met │ synchro/creature │ mutants │ top',
   );
-  stdout.writeln('${'─' * 20}┼────────┼───────────┼────────┼─────────────┼─────────────────');
+  stdout.writeln(
+    '${'─' * 20}┼────────┼───────────┼────────┼─────────────┼──────────────────┼─────────┼──────',
+  );
   for (final value in values) {
     final r = runSimulation(engine, optionsFor(value));
     final median = percentile(r.durationsMs(), 0.5);
@@ -247,7 +313,8 @@ void _printSweep(
     stdout.writeln(
       ' ${value.trim().padLeft(18)} │ ${_sec(median).padLeft(6)} │'
       ' ${_pct(r.prematureRate).padLeft(9)} │ ${_pct(r.rarePlusRate).padLeft(6)} │'
-      ' ${_pct(r.hazardMetRate).padLeft(11)} │ ${(r.synchroPlacements / n).toStringAsFixed(2).padLeft(8)}',
+      ' ${_pct(r.hazardMetRate).padLeft(11)} │ ${(r.synchroPlacements / n).toStringAsFixed(2).padLeft(16)} │'
+      ' ${r.mutantCounts.length.toString().padLeft(7)} │ ${_pct(r.topMutantShare).padLeft(6)}',
     );
   }
 }

@@ -3,3 +3,6 @@
 build/
 .idea/
 *.iml
+
+# Run-time data (art batches, logs)
+run/

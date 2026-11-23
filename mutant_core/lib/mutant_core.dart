@@ -2,17 +2,20 @@
 library;
 
 export 'src/bestiary/bestiary.dart';
+export 'src/bestiary/collection_progress.dart';
 export 'src/bots/kid_bot.dart';
 export 'src/engine/commands.dart';
 export 'src/engine/engine.dart';
 export 'src/engine/events.dart';
 export 'src/model/card.dart';
 export 'src/model/catalog.dart';
+export 'src/model/collection.dart';
 export 'src/model/config.dart';
 export 'src/model/creature.dart';
 export 'src/model/enums.dart';
 export 'src/model/game_state.dart';
 export 'src/model/name_tables.dart';
+export 'src/rules/candidates.dart';
 export 'src/rules/hazard_check.dart';
 export 'src/rules/hints.dart';
 export 'src/rules/naming.dart';

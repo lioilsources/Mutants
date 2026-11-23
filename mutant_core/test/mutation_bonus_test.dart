@@ -54,7 +54,7 @@ void main() {
   });
 
   test('defaults use the overwrite rule, v1 keeps the plan', () {
-    expect(const RulesConfig().mutationBonusNeedsOverwrite, isTrue);
+    expect(RulesConfig.free.mutationBonusNeedsOverwrite, isTrue);
     expect(RulesConfig.v1.mutationBonusNeedsOverwrite, isFalse);
   });
 }

@@ -20,12 +20,32 @@ Directory mutantCoreAssetsDir() {
 }
 
 CardCatalog loadCatalog({Directory? assets}) => CardCatalog.fromJsonString(
-  File('${(assets ?? mutantCoreAssetsDir()).path}/cards.json').readAsStringSync(),
+  File(
+    '${(assets ?? mutantCoreAssetsDir()).path}/cards.json',
+  ).readAsStringSync(),
 );
 
 NameTables loadNameTables({Directory? assets}) => NameTables.fromJsonString(
-  File('${(assets ?? mutantCoreAssetsDir()).path}/names.json').readAsStringSync(),
+  File(
+    '${(assets ?? mutantCoreAssetsDir()).path}/names.json',
+  ).readAsStringSync(),
 );
 
-MutantEngine loadEngine({Directory? assets}) =>
-    MutantEngine(loadCatalog(assets: assets), loadNameTables(assets: assets));
+MutantCollection loadCollection({Directory? assets}) =>
+    MutantCollection.fromJsonString(
+      File(
+        '${(assets ?? mutantCoreAssetsDir()).path}/collection.json',
+      ).readAsStringSync(),
+    );
+
+MoveTable loadMoveTable({Directory? assets}) => MoveTable.fromJsonString(
+  File(
+    '${(assets ?? mutantCoreAssetsDir()).path}/moves.json',
+  ).readAsStringSync(),
+);
+
+MutantEngine loadEngine({Directory? assets}) => MutantEngine(
+  loadCatalog(assets: assets),
+  loadNameTables(assets: assets),
+  loadCollection(assets: assets),
+);

@@ -19,3 +19,5 @@ flutter:
   assets:
     - assets/cards.json
     - assets/names.json
+    - assets/collection.json
+    - assets/moves.json

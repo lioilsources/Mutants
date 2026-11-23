@@ -37,7 +37,7 @@ void main() {
     final host = GameHost(
       engine: engine,
       seats: const [SeatMode.human, SeatMode.human],
-      rules: const RulesConfig(handSize: 0, dealIntervalMs: 0),
+      rules: const RulesConfig(handSize: 0, dealIntervalMs: 0, closedCollection: false),
     );
     final a = host.giveCard(0, 'head_trex')!;
     final b = host.giveCard(1, 'head_shark')!;
@@ -63,7 +63,7 @@ void main() {
     final host = GameHost(
       engine: engine,
       seats: const [SeatMode.human],
-      rules: const RulesConfig(handSize: 0, dealIntervalMs: 0),
+      rules: const RulesConfig(handSize: 0, dealIntervalMs: 0, closedCollection: false),
     );
     host.debug((ts) => DebugHatchNow(ts));
     host.renamePendingHatch('Ohnivák');

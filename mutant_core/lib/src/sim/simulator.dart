@@ -5,6 +5,7 @@ import '../engine/events.dart';
 import '../model/config.dart';
 import '../model/creature.dart';
 import '../model/enums.dart';
+import '../rules/hints.dart';
 import '../util/rng.dart';
 
 class SimOptions {
@@ -63,15 +64,34 @@ class SimReport {
   int fusions = 0;
   int mutations = 0;
   int sessions = 0;
+
+  // Collection mode (PLAN-KOLEKCE §4.5).
+  final Map<BounceReason, int> bouncesByReason = {
+    for (final r in BounceReason.values) r: 0,
+  };
+  int throws = 0;
+  int emptyEggs = 0;
+  int wildsPlaced = 0;
+
+  /// Sum and count of candidates left after the k-th placed slot (index k-1).
+  final List<int> candidatesSum = List.filled(6, 0);
+  final List<int> candidatesN = List.filled(6, 0);
+
+  /// Per creature with a known mutant: ms until one candidate was left
+  /// ("co to bude?") and ms from then to the hatch ("dostavba").
+  final List<int> decideMs = [];
+  final List<int> buildMs = [];
   int simulatedMs = 0;
   bool truncated = false;
 
   int get count => creatures.length;
 
-  double get prematureRate => _rate(creatures.where((c) => c.record.premature).length);
+  double get prematureRate =>
+      _rate(creatures.where((c) => c.record.premature).length);
 
-  double get rarePlusRate =>
-      _rate(creatures.where((c) => c.record.rarity.index >= Rarity.rare.index).length);
+  double get rarePlusRate => _rate(
+    creatures.where((c) => c.record.rarity.index >= Rarity.rare.index).length,
+  );
 
   Map<Rarity, int> get rarityCounts => {
     for (final r in Rarity.values)
@@ -98,6 +118,29 @@ class SimReport {
   }
 
   double _rate(int n) => count == 0 ? 0 : n / count;
+
+  /// Rejected or bounced throws of all throws.
+  double get rejectRate => throws == 0 ? 0 : bounces / throws;
+
+  double candidatesAfter(int k) =>
+      candidatesN[k - 1] == 0 ? 0 : candidatesSum[k - 1] / candidatesN[k - 1];
+
+  Map<String, int> get mutantCounts {
+    final counts = <String, int>{};
+    for (final c in creatures) {
+      final id = c.record.mutantId;
+      if (id != null) counts[id] = (counts[id] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  /// Share of the most frequent mutant among collection hatches.
+  double get topMutantShare {
+    final counts = mutantCounts;
+    if (counts.isEmpty) return 0;
+    final total = counts.values.fold(0, (a, b) => a + b);
+    return counts.values.reduce((a, b) => a > b ? a : b) / total;
+  }
 }
 
 /// Median / percentile of an already sorted list.
@@ -119,7 +162,9 @@ SimReport runSimulation(MutantEngine engine, SimOptions options) {
     final remaining = options.creatures - report.count;
     final target = options.sessionLength <= 0
         ? remaining
-        : (options.sessionLength < remaining ? options.sessionLength : remaining);
+        : (options.sessionLength < remaining
+              ? options.sessionLength
+              : remaining);
     final sessionSeed = Rng.mix(options.seed, report.sessions);
     final profiles = [
       for (var i = 0; i < options.players; i++)
@@ -142,6 +187,9 @@ SimReport runSimulation(MutantEngine engine, SimOptions options) {
     ];
     final nextThink = [for (final bot in bots) bot.thinkDelay()];
     var hatched = 0;
+    final closed = options.rules.closedCollection;
+    var filled = 0;
+    int? decidedAt;
 
     void collect(List<GameEvent> events) {
       for (final event in events) {
@@ -149,6 +197,17 @@ SimReport runSimulation(MutantEngine engine, SimOptions options) {
           case CreatureHatched(:final record):
             report.creatures.add(SimCreature(record, hatched++));
             takenNames.add(record.name);
+            if (decidedAt != null && !record.premature) {
+              final start = event.ts - record.durationMs;
+              report.decideMs.add(decidedAt! - start);
+              report.buildMs.add(event.ts - decidedAt!);
+            }
+            filled = 0;
+            decidedAt = null;
+          case EggEmpty():
+            report.emptyEggs++;
+            filled = 0;
+            decidedAt = null;
           case HazardSurfaced():
             report.hazardsSurfaced++;
           case HazardResolved(:final met):
@@ -161,20 +220,47 @@ SimReport runSimulation(MutantEngine engine, SimOptions options) {
             report.passesCaught++;
           case PassDropped():
             report.passesDropped++;
-          case CardPlaced(:final synchro, :final relay, :final kind):
+          case CardPlaced(
+            :final synchro,
+            :final relay,
+            :final kind,
+            :final card,
+          ):
             report.placements++;
+            report.throws++;
+            if (closed &&
+                engine.catalog[state.defIdOf(card)].kind == CardKind.mutation) {
+              report.wildsPlaced++;
+            }
             if (synchro) report.synchroPlacements++;
             if (relay) report.relays++;
             if (kind == PlacementKind.fusion) report.fusions++;
             if (kind == PlacementKind.overwrite) report.mutations++;
           case SynchroUpgraded():
             report.synchroPlacements++;
-          case CardBounced():
+          case CardBounced(:final reason):
             report.bounces++;
+            report.throws++;
+            report.bouncesByReason[reason] =
+                report.bouncesByReason[reason]! + 1;
           default:
             break;
         }
       }
+    }
+
+    /// After a step without a hatch: candidates per newly filled slot.
+    void track() {
+      if (!closed) return;
+      final slots = state.silhouette.slots.length;
+      if (slots <= filled) return;
+      final left = currentCandidates(state).length;
+      for (var k = filled + 1; k <= slots && k <= 6; k++) {
+        report.candidatesSum[k - 1] += left;
+        report.candidatesN[k - 1]++;
+      }
+      filled = slots;
+      if (left == 1) decidedAt ??= state.now;
     }
 
     while (hatched < target) {
@@ -196,6 +282,7 @@ SimReport runSimulation(MutantEngine engine, SimOptions options) {
         final (next, events) = engine.apply(state, command);
         state = next;
         collect(events);
+        track();
       }
       nextThink[who] = t + decision.nextThinkInMs;
     }

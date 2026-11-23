@@ -1,3 +1,4 @@
+import 'collection.dart';
 import 'config.dart';
 import 'enums.dart';
 
@@ -9,6 +10,7 @@ class SlotFill {
     required this.placedAt,
     this.fused = false,
     this.mutated = false,
+    this.wild = false,
   });
 
   /// Card instance ids; two when fused.
@@ -18,12 +20,16 @@ class SlotFill {
   bool fused;
   final bool mutated;
 
+  /// Collection mode: a mutation card standing in for the recipe's part.
+  final bool wild;
+
   SlotFill copy() => SlotFill(
     cards: List.of(cards),
     placedBy: placedBy,
     placedAt: placedAt,
     fused: fused,
     mutated: mutated,
+    wild: wild,
   );
 }
 
@@ -82,6 +88,9 @@ class Silhouette {
   int hazardsMet;
 
   bool get isComplete => slots.length == Slot.values.length;
+
+  /// Wildcards (mutation cards) on the creature – collection mode.
+  int get wildCount => slots.values.where((f) => f.wild).length;
 
   List<Slot> get emptySlots =>
       Slot.values.where((s) => !slots.containsKey(s)).toList();
@@ -182,6 +191,7 @@ class GameState {
     this.hazard,
     this.hatchedCount = 0,
     this.nextDealAt,
+    this.collection,
   });
 
   final GameConfig config;
@@ -208,6 +218,9 @@ class GameState {
   int? nextDealAt;
   final Set<String> takenNames;
 
+  /// Static collection data in collection mode (shared, never mutated).
+  final MutantCollection? collection;
+
   RulesConfig get rules => config.rules;
 
   String defIdOf(int card) => cardDefs[card];
@@ -228,5 +241,6 @@ class GameState {
     hatchedCount: hatchedCount,
     nextDealAt: nextDealAt,
     takenNames: Set.of(takenNames),
+    collection: collection,
   );
 }

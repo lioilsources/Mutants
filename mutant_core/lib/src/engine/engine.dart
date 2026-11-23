@@ -2,10 +2,12 @@ import 'dart:math' as math;
 
 import '../model/card.dart';
 import '../model/catalog.dart';
+import '../model/collection.dart';
 import '../model/config.dart';
 import '../model/enums.dart';
 import '../model/game_state.dart';
 import '../model/name_tables.dart';
+import '../rules/candidates.dart';
 import '../rules/hazard_check.dart';
 import '../rules/hints.dart';
 import '../rules/pass_catch.dart';
@@ -20,18 +22,32 @@ typedef StepResult = (GameState state, List<GameEvent> events);
 /// `apply(Command) -> (State, [Event])`. Stateless apart from the static
 /// card/name data: every call copies the given state and returns a new one.
 class MutantEngine {
-  MutantEngine(this.catalog, this.names);
+  /// [collection] is required for games with `RulesConfig.closedCollection`;
+  /// it is validated against [catalog] here.
+  MutantEngine(this.catalog, this.names, [this.collection]) {
+    collection?.validate(catalog);
+  }
 
   final CardCatalog catalog;
   final NameTables names;
+  final MutantCollection? collection;
 
   CardDef defOf(GameState state, int card) => catalog[state.defIdOf(card)];
 
   GameState newGame(GameConfig config) {
     final rng = Rng(config.seed);
+    final closed = config.rules.closedCollection;
+    if (closed && collection == null) {
+      throw StateError(
+        'Collection rules need a MutantEngine with a collection',
+      );
+    }
+    // Collection mode: parts that no recipe uses are left out of the deck.
+    final used = closed ? collection!.usedCards : const <String>{};
     final cardDefs = [
       for (final def in catalog.cards)
-        for (var i = 0; i < def.copies; i++) def.id,
+        if (!closed || def.kind != CardKind.part || used.contains(def.id))
+          for (var i = 0; i < def.copies; i++) def.id,
     ];
     final pot = List.generate(cardDefs.length, (i) => i);
     rng.shuffle(pot);
@@ -50,6 +66,7 @@ class MutantEngine {
       drainPerSec: rules.drainPerSec,
       nextDealAt: rules.dealIntervalMs > 0 ? rules.dealIntervalMs : null,
       takenNames: Set.of(config.takenNames),
+      collection: closed ? collection : null,
     );
 
     // Deal round-robin. Hazards are never dealt – they stay where they are
@@ -93,6 +110,8 @@ class MutantEngine {
         _debugGiveCard(step, command);
       case DebugHatchNow():
         _hatch(step, premature: false);
+      case DebugHatchMutant():
+        _debugHatchMutant(step, command);
     }
 
     s.rngState = step.rng.state;
@@ -159,14 +178,19 @@ class MutantEngine {
   void _drainTo(GameState s, int t) {
     if (t <= s.now) return;
     if (!s.incubatorFrozen) {
-      s.incubator = math.max(0, s.incubator - s.drainPerSec * (t - s.now) / 1000);
+      s.incubator = math.max(
+        0,
+        s.incubator - s.drainPerSec * (t - s.now) / 1000,
+      );
     }
     s.now = t;
   }
 
   void _changeIncubator(_Step step, double delta, IncubatorReason reason) {
     final s = step.s;
-    s.incubator = (s.incubator + delta).clamp(0, s.rules.incubatorMax).toDouble();
+    s.incubator = (s.incubator + delta)
+        .clamp(0, s.rules.incubatorMax)
+        .toDouble();
     step.events.add(
       IncubatorChanged(s.now, delta: delta, level: s.incubator, reason: reason),
     );
@@ -193,31 +217,50 @@ class MutantEngine {
     }
     final def = defOf(s, card);
     final silhouette = s.silhouette;
-    final result = resolvePlacement(
-      silhouette,
-      def,
-      player: player.id,
-      ts: s.now,
-      synchroWindowMs: s.rules.synchroWindowMs,
-    );
-
-    switch (result) {
-      case PlacementResult.notPlaceable:
-        return step.reject(command, RejectReason.notPlaceable);
-      case PlacementResult.bounceOccupied || PlacementResult.bounceSealTaken:
-        step.events.add(
-          CardBounced(
-            s.now,
+    final closed = _closed(s);
+    final result = closed
+        ? resolveCollectionPlacement(
+            silhouette,
+            def,
+            candidates: _candidates(s),
+            maxWild: s.rules.maxWildPerCreature,
+          )
+        : resolvePlacement(
+            silhouette,
+            def,
             player: player.id,
-            card: card,
-            reason: result == PlacementResult.bounceSealTaken
-                ? BounceReason.sealTaken
-                : BounceReason.slotOccupied,
-          ),
-        );
-        return;
-      default:
-        break;
+            ts: s.now,
+            synchroWindowMs: s.rules.synchroWindowMs,
+          );
+
+    final bounce = switch (result) {
+      PlacementResult.bounceOccupied => BounceReason.slotOccupied,
+      PlacementResult.bounceSealTaken => BounceReason.sealTaken,
+      PlacementResult.rejectNoFit => BounceReason.noFit,
+      PlacementResult.rejectWildLimit => BounceReason.wildLimit,
+      _ => null,
+    };
+    if (result == PlacementResult.notPlaceable) {
+      return step.reject(command, RejectReason.notPlaceable);
+    }
+    if (bounce != null) {
+      final toPot = closed && s.rules.rejectToPot;
+      if (toPot) {
+        player.hand.remove(card);
+        player.caughtAt.remove(card);
+        _returnToPot(step, card);
+      }
+      step.events.add(
+        CardBounced(
+          s.now,
+          player: player.id,
+          card: card,
+          reason: bounce,
+          toPot: toPot,
+        ),
+      );
+      if (toPot) _refill(step, player);
+      return;
     }
 
     player.hand.remove(card);
@@ -231,6 +274,7 @@ class MutantEngine {
           placedBy: player.id,
           placedAt: s.now,
           mutated: isMutation,
+          wild: isMutation && closed,
         );
         if (isMutation) silhouette.mutations++;
       case PlacementResult.fusion:
@@ -476,13 +520,35 @@ class MutantEngine {
 
   /// Draws one placeable card. A hazard on top surfaces on the way (or, if
   /// one is already ticking, goes to the bottom of the pot).
+  ///
+  /// Collection mode, chytrý kotlík: with probability `fitDealBias` the deal
+  /// takes the topmost part that fits right now instead of the top card
+  /// (hazards on top still surface first). Hazards nobody can meet go to
+  /// the bottom.
   bool _drawOne(_Step step, PlayerState player) {
     final s = step.s;
+    if (_closed(s) && s.rules.fitDealBias > 0) {
+      _surfaceTopHazards(step);
+      if (step.rng.chance(s.rules.fitDealBias)) {
+        final candidates = _candidates(s);
+        final index = s.pot.lastIndexWhere((c) {
+          final def = defOf(s, c);
+          return !s.silhouette.slots.containsKey(def.slot) &&
+              partFits(candidates, def);
+        });
+        if (index >= 0) {
+          final card = s.pot.removeAt(index);
+          player.hand.add(card);
+          step.events.add(CardDrawn(s.now, player: player.id, card: card));
+          return true;
+        }
+      }
+    }
     var hazardSkips = 0;
     while (s.pot.isNotEmpty) {
       final card = s.pot.removeLast();
       if (defOf(s, card).kind == CardKind.hazard) {
-        if (s.hazard == null) {
+        if (s.hazard == null && _hazardCanSurface(s, card)) {
           _surfaceHazard(step, card, s.rules.hazardFuseMs);
         } else {
           s.pot.insert(0, card);
@@ -497,6 +563,42 @@ class MutantEngine {
     return false;
   }
 
+  /// Handles hazards sitting on top of the pot the same way a normal draw
+  /// would, so the smart pick below does not skip them.
+  void _surfaceTopHazards(_Step step) {
+    final s = step.s;
+    var skips = 0;
+    while (s.pot.isNotEmpty &&
+        defOf(s, s.pot.last).kind == CardKind.hazard &&
+        skips <= s.pot.length) {
+      final card = s.pot.removeLast();
+      if (s.hazard == null && _hazardCanSurface(s, card)) {
+        _surfaceHazard(step, card, s.rules.hazardFuseMs);
+      } else {
+        s.pot.insert(0, card);
+        skips++;
+      }
+    }
+  }
+
+  bool _hazardCanSurface(GameState s, int card) {
+    if (!_closed(s)) return true;
+    return hazardSatisfiable(
+      defOf(s, card).requires!,
+      s.silhouette,
+      _candidates(s),
+      (id) => catalog[id],
+      (c) => defOf(s, c),
+      seals: catalog.ofKind(CardKind.seal),
+      wildAvailable: s.silhouette.wildCount < s.rules.maxWildPerCreature,
+    );
+  }
+
+  bool _closed(GameState s) => s.rules.closedCollection && s.collection != null;
+
+  List<MutantDef> _candidates(GameState s) =>
+      candidatesOf(s.silhouette, s.defIdOf, s.collection!);
+
   /// Parts go back to a random spot; hazards to the bottom so an instantly
   /// met hazard cannot be redrawn in a loop.
   void _returnToPot(_Step step, int card) {
@@ -510,10 +612,50 @@ class MutantEngine {
 
   void _hatch(_Step step, {required bool premature}) {
     final s = step.s;
+    if (_closed(s)) return _hatchFromCollection(step, premature: premature);
     final record = buildCreatureRecord(s, catalog, names, premature: premature);
     s.takenNames.add(record.name);
     step.events.add(CreatureHatched(s.now, record));
+    _startNextCreature(step);
+  }
 
+  /// PLAN-KOLEKCE §3.6: complete → the single candidate; premature → a
+  /// random candidate, half-baked; nothing placed → empty egg, no record.
+  void _hatchFromCollection(
+    _Step step, {
+    required bool premature,
+    MutantDef? forced,
+  }) {
+    final s = step.s;
+    if (forced == null && s.silhouette.slots.isEmpty) {
+      step.events.add(EggEmpty(s.now));
+      _cancelHazard(step);
+      final cards = s.silhouette.allCards.toList();
+      s.silhouette = Silhouette(startedAt: s.now);
+      for (final card in cards) {
+        _returnToPot(step, card);
+      }
+      s.incubator = s.rules.incubatorStart;
+      return;
+    }
+    final candidates = forced == null ? _candidates(s) : [forced];
+    final mutant = candidates.length == 1
+        ? candidates.single
+        : candidates[step.rng.nextInt(candidates.length)];
+    final record = buildCollectionRecord(
+      s,
+      catalog,
+      names,
+      mutant,
+      premature: premature || !s.silhouette.isComplete,
+    );
+    s.takenNames.add(record.name);
+    step.events.add(CreatureHatched(s.now, record));
+    _startNextCreature(step);
+  }
+
+  void _startNextCreature(_Step step) {
+    final s = step.s;
     _cancelHazard(step);
     final cards = s.silhouette.allCards.toList();
     s.silhouette = Silhouette(startedAt: s.now);
@@ -545,6 +687,27 @@ class MutantEngine {
     _cancelHazard(step);
     final card = _takeOrMint(s, command.defId);
     _surfaceHazard(step, card, command.fuseMs ?? s.rules.hazardFuseMs);
+  }
+
+  void _debugHatchMutant(_Step step, DebugHatchMutant command) {
+    final s = step.s;
+    final mutant = _closed(s) ? s.collection!.tryGet(command.mutantId) : null;
+    if (mutant == null) return step.reject(command, RejectReason.unknownCard);
+    _cancelHazard(step);
+    for (final card in s.silhouette.allCards.toList()) {
+      _returnToPot(step, card);
+    }
+    final silhouette = Silhouette(startedAt: s.silhouette.startedAt);
+    s.silhouette = silhouette;
+    for (final slot in Slot.values) {
+      silhouette.slots[slot] = SlotFill(
+        cards: [_takeOrMint(s, mutant.parts[slot]!)],
+        placedBy: 0,
+        placedAt: s.now,
+      );
+    }
+    silhouette.contributors.addAll(s.players.map((p) => p.id));
+    _hatchFromCollection(step, premature: command.premature, forced: mutant);
   }
 
   void _debugGiveCard(_Step step, DebugGiveCard command) {

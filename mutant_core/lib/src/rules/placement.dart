@@ -1,4 +1,5 @@
 import '../model/card.dart';
+import '../model/collection.dart';
 import '../model/enums.dart';
 import '../model/game_state.dart';
 
@@ -9,6 +10,12 @@ enum PlacementResult {
   seal,
   bounceOccupied,
   bounceSealTaken,
+
+  /// Collection mode: no mutant can still be built with this part.
+  rejectNoFit,
+
+  /// Collection mode: the creature already has the maximum of wildcards.
+  rejectWildLimit,
   notPlaceable,
 }
 
@@ -56,5 +63,39 @@ PlacementResult resolvePlacement(
           fill.placedBy != player &&
           (ts - fill.placedAt).abs() <= synchroWindowMs;
       return canFuse ? PlacementResult.fusion : PlacementResult.bounceOccupied;
+  }
+}
+
+/// Collection mode (PLAN-KOLEKCE §3.1). No fusion, no overwrite:
+/// - part → its slot is empty and some [candidates] recipe has exactly it
+/// - mutation = wildcard → its slot is empty and fewer than [maxWild] wildcards
+/// - seal → as in free mode
+PlacementResult resolveCollectionPlacement(
+  Silhouette silhouette,
+  CardDef def, {
+  required List<MutantDef> candidates,
+  required int maxWild,
+}) {
+  switch (def.kind) {
+    case CardKind.hazard:
+      return PlacementResult.notPlaceable;
+    case CardKind.seal:
+      return silhouette.seal == null
+          ? PlacementResult.seal
+          : PlacementResult.bounceSealTaken;
+    case CardKind.mutation:
+      if (silhouette.slots.containsKey(def.slot)) {
+        return PlacementResult.bounceOccupied;
+      }
+      return silhouette.wildCount < maxWild
+          ? PlacementResult.place
+          : PlacementResult.rejectWildLimit;
+    case CardKind.part:
+      if (silhouette.slots.containsKey(def.slot)) {
+        return PlacementResult.bounceOccupied;
+      }
+      return candidates.any((m) => m.parts[def.slot] == def.id)
+          ? PlacementResult.place
+          : PlacementResult.rejectNoFit;
   }
 }

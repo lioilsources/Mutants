@@ -22,7 +22,15 @@ class RulesConfig {
     this.catchWindowMs = 2000,
     this.passCooldownMs = 4000,
     this.hazardFuseMs = 5000,
+    this.closedCollection = true,
+    this.fitDealBias = 0.3,
+    this.maxWildPerCreature = 2,
+    this.rejectToPot = false,
+    this.raritySynchroThreshold = 2,
   });
+
+  /// Free assembly (any six parts) with the calibrated numbers from phase 1.
+  static const free = RulesConfig(closedCollection: false);
 
   /// Rules v1 exactly as in the plan: 5 cards, the hand refills after every
   /// throw or pass, no timed dealing.
@@ -35,6 +43,7 @@ class RulesConfig {
     drainPerHatch: 0.5,
     chaosOriginsPerPoint: 3,
     mutationBonusNeedsOverwrite: false,
+    closedCollection: false,
   );
 
   /// Cards dealt at the start (and the refill target when [refillOnPlay]).
@@ -82,6 +91,23 @@ class RulesConfig {
   final int passCooldownMs;
   final int hazardFuseMs;
 
+  /// Closed collection (PLAN-KOLEKCE §3): a part is accepted only when some
+  /// mutant in the collection can still be built with it; no fusion.
+  final bool closedCollection;
+
+  /// Chytrý kotlík: chance that a deal takes the topmost fitting part
+  /// instead of the top card. Collection mode only.
+  final double fitDealBias;
+
+  /// Wildcards (mutation cards) allowed on one creature.
+  final int maxWildPerCreature;
+
+  /// Simulation only: a rejected card falls into the pot instead of the hand.
+  final bool rejectToPot;
+
+  /// Collection rarity: +1 for at least this many synchro throws.
+  final int raritySynchroThreshold;
+
   RulesConfig copyWith({
     int? handSize,
     bool? refillOnPlay,
@@ -103,6 +129,11 @@ class RulesConfig {
     int? catchWindowMs,
     int? passCooldownMs,
     int? hazardFuseMs,
+    bool? closedCollection,
+    double? fitDealBias,
+    int? maxWildPerCreature,
+    bool? rejectToPot,
+    int? raritySynchroThreshold,
   }) => RulesConfig(
     handSize: handSize ?? this.handSize,
     refillOnPlay: refillOnPlay ?? this.refillOnPlay,
@@ -125,6 +156,12 @@ class RulesConfig {
     catchWindowMs: catchWindowMs ?? this.catchWindowMs,
     passCooldownMs: passCooldownMs ?? this.passCooldownMs,
     hazardFuseMs: hazardFuseMs ?? this.hazardFuseMs,
+    closedCollection: closedCollection ?? this.closedCollection,
+    fitDealBias: fitDealBias ?? this.fitDealBias,
+    maxWildPerCreature: maxWildPerCreature ?? this.maxWildPerCreature,
+    rejectToPot: rejectToPot ?? this.rejectToPot,
+    raritySynchroThreshold:
+        raritySynchroThreshold ?? this.raritySynchroThreshold,
   );
 
   @override
@@ -134,7 +171,7 @@ class RulesConfig {
       ' · max hand $maxHandSize'
       ' · drain $drainPerSec/s (+$drainPerHatch/hatch)'
       ' · chaos per $chaosOriginsPerPoint origins'
-      ' · mutation bonus ${mutationBonusNeedsOverwrite ? 'on overwrite' : 'any'}';
+      '${closedCollection ? ' · collection (fit bias $fitDealBias, max wild $maxWildPerCreature${rejectToPot ? ', reject to pot' : ''})' : ' · free assembly · mutation bonus ${mutationBonusNeedsOverwrite ? 'on overwrite' : 'any'}'}';
 }
 
 class PlayerInfo {
@@ -145,7 +182,11 @@ class PlayerInfo {
   final String name;
   final String avatar;
 
-  Map<String, dynamic> toJson() => {'playerId': id, 'name': name, 'avatar': avatar};
+  Map<String, dynamic> toJson() => {
+    'playerId': id,
+    'name': name,
+    'avatar': avatar,
+  };
 
   factory PlayerInfo.fromJson(Map<String, dynamic> json) => PlayerInfo(
     id: json['playerId'] as int,

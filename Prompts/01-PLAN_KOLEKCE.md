@@ -148,8 +148,9 @@ Pahýly už neexistují.
 ### 3.7 Rarita
 Rarita teď říká, **jak dobře se kousek povedl** (ve sbírce se drží nejlepší dosažená). Výchozí vzorec:
 
-`tier mutanta (kříženec 0, prapředek 1) + 1 za ≥ 3 synchro hody + 1 za každou splněnou Událost`,
-oříznuto na 0–5; předčasně = 0. Cíl ze simulace zůstává „vzácný+ ~30 %". Ladit prahy a `tier`,
+`tier mutanta (kříženec 0, prapředek 2) + 1 za ≥ 2 synchro hody + 1 za každou splněnou Událost`,
+oříznuto na 0–5; předčasně = 0. (Po kalibraci v M1; návrh byl prapředek 1 a ≥ 3 synchro, to dalo
+vzácný+ jen 5–10 %.) Cíl ze simulace zůstává „vzácný+ ~30 %". Ladit prahy a `tier`,
 nepřidávat nové mechaniky. Kódy důvodů: `tier`, `synchro`, `hazard`, `premature`.
 
 ### 3.8 Chytrý kotlík
@@ -157,7 +158,7 @@ Bez něj režim sbírky nefunguje: v dostavbě pasuje 1–4 karty z ~60 a náhod
 včas. Hrubý model mimo engine (2–4 boti, bez Událostí a synchra) dal bez nápovědy 40–90 % předčasných
 líhnutí a medián 110–145 s na mutanta.
 
-`fitDealBias` (0–1, výchozí **0,5**): když kotlík rozdává kartu, s touto pravděpodobností vytáhne
+`fitDealBias` (0–1, výchozí **0,3** po kalibraci v M1; návrh byl 0,5): když kotlík rozdává kartu, s touto pravděpodobností vytáhne
 **nejvýš položenou část, která právě pasuje** (pokud v kotlíku nějaká je), jinak vrchní kartu jako dnes.
 Události na vrchu se vynořují stejně jako dnes. Náhoda jde z RNG ve stavu. Tentýž hrubý model dává
 pro 0,5 medián ~55–66 s a ~7–10 % předčasných; skutečnou hodnotu určí kalibrace v `sim` na cíle z §4.5.
@@ -180,7 +181,8 @@ v simulaci. Až bude M2 hotový, volný režim smazat samostatným commitem.
   `origins` odpovídá dílům.
 - `assets/moves.json` (už je v repu) → `lib/src/model/move_table.dart`: `MoveTable` (karta → `move`,
   `label`). Engine ho nepotřebuje; čte ho reveal v aplikaci a Blender skript (§6.2). Přidat do `flutter: assets`.
-- `RulesConfig`: `closedCollection`, `fitDealBias = 0.5`, `maxWildPerCreature = 2`, `rejectToPot = false`.
+- `RulesConfig`: `closedCollection`, `fitDealBias = 0.3`, `maxWildPerCreature = 2`, `rejectToPot = false`,
+  `raritySynchroThreshold = 2`.
 - `SlotFill.wild`, `Silhouette.wildCount`.
 - `CreatureRecord`: + `mutantId` (null u starých záznamů), + `wildSlots`; `parts` = položené karty;
   `stats` a `element` z receptu (živel přebíjí pečeť). Bestiář JSON `version` 1 → 2, v1 se dál načte.
@@ -400,9 +402,9 @@ příliš velký rozdíl prvního a posledního snímku, pohyb okrajů obrazu (k
 Každý milník = samostatný commit(y), zelené `dart test`, `dart analyze`, `flutter test`.
 
 **M1 – Sbírka v enginu** (`mutant_core`)
-- [ ] model + validace sbírky, `MoveTable`
-- [ ] pravidla §3.1–3.7, engine §4.3, testy §4.4
-- [ ] chytrý kotlík, sim metriky, kalibrace na cíle §4.5, README
+- [x] model + validace sbírky, `MoveTable`
+- [x] pravidla §3.1–3.7, engine §4.3, testy §4.4
+- [x] chytrý kotlík, sim metriky, kalibrace na cíle §4.5, README
 - Hotovo, když: cíle §4.5 platí pro 2–5 hráčů a staré testy běží beze změny chování.
 
 **M2 – Hra se sbírkou ve 2D** (`app`, bez nové grafiky)

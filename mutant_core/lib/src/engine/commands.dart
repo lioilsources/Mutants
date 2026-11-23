@@ -90,3 +90,13 @@ final class DebugGiveCard extends Command {
 final class DebugHatchNow extends Command {
   const DebugHatchNow(super.ts);
 }
+
+/// Collection mode: fills the silhouette with [mutantId]'s recipe and hatches
+/// it (for the reveal and the collection screen). [premature] hatches it
+/// half-baked instead.
+final class DebugHatchMutant extends Command {
+  const DebugHatchMutant(super.ts, this.mutantId, {this.premature = false});
+
+  final String mutantId;
+  final bool premature;
+}

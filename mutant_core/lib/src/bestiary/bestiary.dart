@@ -10,7 +10,9 @@ class Bestiary {
     records.forEach(add);
   }
 
-  static const schemaVersion = 1;
+  /// 2 adds `mutantId` and `wildSlots` to records; v1 files still load.
+  static const schemaVersion = 2;
+  static const supportedSchemas = {1, 2};
 
   final List<CreatureRecord> _records = [];
   final Map<String, int> _indexById = {};
@@ -57,7 +59,7 @@ class Bestiary {
 
   factory Bestiary.fromJson(Map<String, dynamic> json) {
     final schema = json['schema'] as int?;
-    if (schema != schemaVersion) {
+    if (!supportedSchemas.contains(schema)) {
       throw FormatException('Unsupported bestiary schema $schema');
     }
     return Bestiary([

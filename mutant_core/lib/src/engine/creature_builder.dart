@@ -1,5 +1,6 @@
 import '../model/card.dart';
 import '../model/catalog.dart';
+import '../model/collection.dart';
 import '../model/creature.dart';
 import '../model/enums.dart';
 import '../model/game_state.dart';
@@ -30,10 +31,7 @@ CreatureRecord buildCreatureRecord(
   }
   final seal = silhouette.seal == null ? null : defOf(silhouette.seal!);
 
-  final element = dominantElement(
-    partsInSlotOrder,
-    sealElement: seal?.element,
-  );
+  final element = dominantElement(partsInSlotOrder, sealElement: seal?.element);
   final rarity = evaluateRarity(
     RarityInput(
       parts: partsInSlotOrder,
@@ -86,5 +84,66 @@ CreatureRecord buildCreatureRecord(
     expedition: config.expedition,
     premature: premature,
     durationMs: state.now - silhouette.startedAt,
+  );
+}
+
+/// Collection mode: the record of [mutant] hatched from the current
+/// silhouette (PLAN-KOLEKCE §3.6, §4.1). `parts` are the cards that were
+/// actually placed (a wildcard slot holds the mutation card); stats and
+/// element come from the recipe, a seal overrides the element.
+CreatureRecord buildCollectionRecord(
+  GameState state,
+  CardCatalog catalog,
+  NameTables names,
+  MutantDef mutant, {
+  required bool premature,
+}) {
+  final silhouette = state.silhouette;
+  final config = state.config;
+  CardDef defOf(int card) => catalog[state.defIdOf(card)];
+
+  final parts = <Slot, List<String>>{};
+  final wildSlots = <Slot>{};
+  for (final slot in Slot.values) {
+    final fill = silhouette.slots[slot];
+    if (fill == null) continue;
+    parts[slot] = [for (final card in fill.cards) state.defIdOf(card)];
+    if (fill.wild) wildSlots.add(slot);
+  }
+  final seal = silhouette.seal == null ? null : defOf(silhouette.seal!);
+  final recipe = [for (final slot in Slot.values) catalog[mutant.parts[slot]!]];
+  final element = dominantElement(recipe, sealElement: seal?.element);
+  final rarity = evaluateCollectionRarity(
+    tier: mutant.tier,
+    synchroThrows: silhouette.synchroThrows,
+    hazardsMet: silhouette.hazardsMet,
+    premature: premature,
+    synchroThreshold: state.rules.raritySynchroThreshold,
+  );
+
+  final index = state.hatchedCount;
+  return CreatureRecord(
+    id:
+        '${config.seed.toRadixString(36)}-'
+        '${config.epochMs.toRadixString(36)}-$index',
+    seed: Rng.mix(config.seed, index),
+    parts: parts,
+    seal: seal?.id,
+    element: element,
+    rarity: rarity.rarity,
+    rarityReasons: rarity.reasons,
+    stats: recipe.fold(Stats.zero, (sum, d) => sum + d.stats),
+    ability: element == null ? names.stumpAbility : names.abilities[element]!,
+    name: mutant.name,
+    creators: config.players,
+    createdAt: DateTime.fromMillisecondsSinceEpoch(
+      config.epochMs + state.now,
+      isUtc: true,
+    ),
+    expedition: config.expedition,
+    premature: premature,
+    durationMs: state.now - silhouette.startedAt,
+    mutantId: mutant.id,
+    wildSlots: wildSlots,
   );
 }

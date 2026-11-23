@@ -5,7 +5,10 @@ import 'support.dart';
 
 void main() {
   test('bots hatch the requested number of creatures', () {
-    final report = runSimulation(engine, const SimOptions(players: 3, creatures: 12));
+    final report = runSimulation(
+      engine,
+      const SimOptions(players: 3, creatures: 12),
+    );
     expect(report.count, 12);
     expect(report.truncated, isFalse);
     expect(report.sessions, 3);
@@ -16,13 +19,20 @@ void main() {
     String summary(SimReport r) =>
         '${r.durationsMs()} ${r.rarityCounts} ${r.passesSent} ${r.hazardsMet}';
     const options = SimOptions(players: 4, creatures: 10, seed: 3);
-    expect(summary(runSimulation(engine, options)), summary(runSimulation(engine, options)));
+    expect(
+      summary(runSimulation(engine, options)),
+      summary(runSimulation(engine, options)),
+    );
   });
 
   test('solo seat works (no passing)', () {
     final report = runSimulation(
       engine,
-      const SimOptions(players: 1, creatures: 5, profiles: [KidBotProfile.careful]),
+      const SimOptions(
+        players: 1,
+        creatures: 5,
+        profiles: [KidBotProfile.careful],
+      ),
     );
     expect(report.count, 5);
     expect(report.passesSent, 0);
@@ -34,7 +44,11 @@ void main() {
       const SimOptions(
         players: 2,
         creatures: 3,
-        rules: RulesConfig(handSize: 0, dealIntervalMs: 0),
+        rules: RulesConfig(
+          handSize: 0,
+          dealIntervalMs: 0,
+          closedCollection: false,
+        ),
       ),
     );
     expect(report.count, 3);

@@ -6,8 +6,9 @@ import 'enums.dart';
 class RarityReason {
   const RarityReason(this.code, this.delta);
 
-  /// `chaos`, `harmony`, `fusion`, `mutation`, `hazard`, `synchro`,
-  /// `premature`, `stumps`.
+  /// Free mode: `chaos`, `harmony`, `fusion`, `mutation`, `hazard`,
+  /// `synchro`, `premature`, `stumps`. Collection mode: `tier`, `synchro`,
+  /// `hazard`, `premature`.
   final String code;
   final int delta;
 
@@ -46,6 +47,8 @@ class CreatureRecord {
     required this.premature,
     required this.durationMs,
     this.expedition,
+    this.mutantId,
+    this.wildSlots = const {},
   });
 
   final String id;
@@ -68,6 +71,17 @@ class CreatureRecord {
   final bool premature;
   final int durationMs;
 
+  /// Collection mode: which mutant of the collection this is. Null for
+  /// records from free assembly ("Staré pokusy").
+  final String? mutantId;
+
+  /// Slots filled by a wildcard; the figure shows the recipe part there.
+  final Set<Slot> wildSlots;
+
+  /// Owned = fully built mutant from the collection; a premature one is
+  /// only "seen".
+  bool get isOwned => mutantId != null && !premature;
+
   /// Pahýly.
   List<Slot> get stumps =>
       Slot.values.where((s) => !parts.containsKey(s)).toList();
@@ -88,6 +102,8 @@ class CreatureRecord {
     premature: premature,
     durationMs: durationMs,
     expedition: expedition ?? this.expedition,
+    mutantId: mutantId,
+    wildSlots: wildSlots,
   );
 
   Map<String, dynamic> toJson() => {
@@ -106,6 +122,8 @@ class CreatureRecord {
     'expedition': expedition,
     'premature': premature,
     'durationMs': durationMs,
+    if (mutantId != null) 'mutantId': mutantId,
+    if (wildSlots.isNotEmpty) 'wildSlots': [for (final s in wildSlots) s.name],
   };
 
   factory CreatureRecord.fromJson(Map<String, dynamic> json) => CreatureRecord(
@@ -135,5 +153,10 @@ class CreatureRecord {
     expedition: json['expedition'] as String?,
     premature: json['premature'] as bool,
     durationMs: json['durationMs'] as int,
+    mutantId: json['mutantId'] as String?,
+    wildSlots: {
+      for (final s in (json['wildSlots'] as List? ?? const []))
+        enumByName(Slot.values, s as String),
+    },
   );
 }

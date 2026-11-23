@@ -73,3 +73,30 @@ RarityResult evaluateRarity(RarityInput input) {
   final clamped = raw.clamp(0, Rarity.values.length - 1);
   return RarityResult(Rarity.values[clamped], raw, reasons);
 }
+
+/// Collection mode (PLAN-KOLEKCE §3.7): how well this piece turned out.
+/// `tier` (ancestor 2, hybrid 0) + 1 for ≥ [synchroThreshold] synchro throws
+/// + 1 per met hazard, clamped to 0–5. A premature hatch is always 0.
+/// Wildcards do not count.
+RarityResult evaluateCollectionRarity({
+  required int tier,
+  required int synchroThrows,
+  required int hazardsMet,
+  required bool premature,
+  int synchroThreshold = 3,
+}) {
+  if (premature) {
+    return const RarityResult(Rarity.common, 0, [RarityReason('premature', 0)]);
+  }
+  final reasons = <RarityReason>[
+    if (tier != 0) RarityReason('tier', tier),
+    if (synchroThrows >= synchroThreshold) const RarityReason('synchro', 1),
+    if (hazardsMet > 0) RarityReason('hazard', hazardsMet),
+  ];
+  final raw = reasons.fold(0, (sum, r) => sum + r.delta);
+  return RarityResult(
+    Rarity.values[raw.clamp(0, Rarity.values.length - 1)],
+    raw,
+    reasons,
+  );
+}
