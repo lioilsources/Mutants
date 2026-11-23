@@ -23,6 +23,32 @@ flutter:
   assets:
     - assets/figures/drakobot/
     - assets/figures/zralomedved/
+    - assets/figures/drakobotnice/
+    - assets/figures/drakosaurus/
+    - assets/figures/jelenobot/
+    - assets/figures/jelenobrouk/
+    - assets/figures/mouchopapousek/
+    - assets/figures/pavoudrak/
+    - assets/figures/pavoukobotnice/
+    - assets/figures/prabrouk/
+    - assets/figures/prachlupac/
+    - assets/figures/pradrak/
+    - assets/figures/prajester/
+    - assets/figures/praptak/
+    - assets/figures/prarobot/
+    - assets/figures/prazralok/
+    - assets/figures/rexozelva/
+    - assets/figures/robobrouk/
+    - assets/figures/robosaurus/
+    - assets/figures/robotucnak/
+    - assets/figures/sovodrak/
+    - assets/figures/sovomedved/
+    - assets/figures/sovosaurus/
+    - assets/figures/tricebrouk/
+    - assets/figures/tricemedved/
+    - assets/figures/vlkodrak/
+    - assets/figures/zralobot/
+    - assets/figures/zralotucnak/
   uses-material-design: true
   fonts:
     # Fredoka (SIL OFL 1.1, assets/fonts/OFL.txt) – variable weight axis.
