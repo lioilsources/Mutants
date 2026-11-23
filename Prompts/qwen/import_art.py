@@ -10,13 +10,15 @@ Výstup:  app/assets/figures/<id>/hero.webp    1024², průhledné pozadí
          app/assets/backdrops/<name>.webp     beze změny pozadí
          + chybějící adresáře doplní do app/pubspec.yaml (flutter: assets:)
 
-Pozadí: výchozí `flood` zaplaví šedé studiové pozadí od okrajů a sleduje jeho
+Pozadí: leží-li vedle obrázku `<jméno>.rgba.png` (výřez z BiRefNet), použije se ten.
+Jinak výchozí `flood` zaplaví šedé studiové pozadí od okrajů a sleduje jeho
 přechod i měkký stín pod nohama (jen PIL, ~1 s na obrázek). `--remover rembg` použije rembg, je-li
 nainstalovaný (`pip install rembg`), hodí se na obrázky s nečistým pozadím.
 
 Spuštění z kořene repa:
   python3 Prompts/qwen/import_art.py run/qwen/out
   python3 Prompts/qwen/import_art.py run/qwen/pilot --pick run/qwen/pilot-pick.json
+  python3 Prompts/qwen/import_art.py run/qwen/out --pick-seed 1   # <id>_s1.png ke všem
   python3 Prompts/qwen/import_art.py run/qwen/out --only figure --dry-run
 """
 
@@ -141,6 +143,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("src", type=Path, help="složka s výstupy Qwenu")
     ap.add_argument("--pick", type=Path, help='JSON {"id": "soubor.png"} – vybraný seed ke každému id')
+    ap.add_argument("--pick-seed", type=int, help="ke každému id bez výběru vezmi <id>_s<seed>.png")
     ap.add_argument("--only", choices=["figure", "card", "joker", "seal", "hazard", "backdrop"], action="append")
     ap.add_argument("--remover", choices=["flood", "rembg"], default="flood")
     ap.add_argument("--thresh", type=int, default=18, help="tolerance kroku zaplavení pozadí (flood)")
@@ -150,6 +153,9 @@ def main():
 
     batch = load_batch()
     picks = json.loads(args.pick.read_text(encoding="utf-8")) if args.pick else {}
+    if args.pick_seed is not None:
+        # Flat output of a seed batch: <id>_s<seed>.png; explicit picks win.
+        picks = {key: f"{key}_s{args.pick_seed}.png" for key in batch} | picks
     dirs, done, missing, failed = set(), 0, [], []
 
     for key, row in batch.items():
@@ -186,7 +192,14 @@ def main():
                 out = img.convert("RGB")
                 out.thumbnail((928, 1664), Image.LANCZOS)
             else:
-                cut = remove_rembg(img) if args.remover == "rembg" else remove_flood(img, args.thresh)
+                cutout = src.with_name(src.stem + ".rgba.png")
+                if cutout.exists():
+                    # BiRefNet cutout made next to the generation (L40S ComfyUI-RMBG).
+                    cut = Image.open(cutout).convert("RGBA")
+                elif args.remover == "rembg":
+                    cut = remove_rembg(img)
+                else:
+                    cut = remove_flood(img, args.thresh)
                 out = fit_square(cut, targets[0][1], 0.04 if group == "figure" else 0.06)
             targets[0][0].parent.mkdir(parents=True, exist_ok=True)
             out.save(targets[0][0], "WEBP", quality=args.quality, method=6)

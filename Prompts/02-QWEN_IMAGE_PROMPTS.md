@@ -446,7 +446,7 @@ hlava: Jelení hlava · trup: Kovový trup · přední: Gorilí paže · zadní:
 ```text
 Studio product photo of ONE collectible designer vinyl toy for kids: a friendly chimera monster built as a ball-jointed action figure from six mismatched toy parts.
 Pose: standing upright on its two hind limbs like a small kaiju toy, body turned three-quarters to the left, face looking at the viewer, arms held slightly out from the sides, legs apart, relaxed neutral stance.
-Head: a gentle deer head with branching antlers sprouting small green leaves, moss-green and light-brown fur.
+Head: a gentle deer head with a long muzzle, a black nose, big pointed ears and branching antlers sprouting small green leaves, light-brown fur with a cream muzzle.
 Body: a boxy riveted metal robot torso with a round glowing yellow power core in the chest, yellow and grey painted steel.
 Arms (front limbs): a pair of huge long gorilla arms with big fists, mossy dark-green fur with lighter green hands.
 Legs (hind limbs): a pair of small tank caterpillar tracks in place of hind legs, dark grey treads with stone-brown wheels.
@@ -463,7 +463,7 @@ hlava: Jelení hlava · trup: Krovky brouka · přední: Gorilí paže · zadní
 ```text
 Studio product photo of ONE collectible designer vinyl toy for kids: a friendly chimera monster built as a ball-jointed action figure from six mismatched toy parts.
 Pose: standing upright on its two hind limbs like a small kaiju toy, body turned three-quarters to the left, face looking at the viewer, arms held slightly out from the sides, legs apart, relaxed neutral stance.
-Head: a gentle deer head with branching antlers sprouting small green leaves, moss-green and light-brown fur.
+Head: a gentle deer head with a long muzzle, a black nose, big pointed ears and branching antlers sprouting small green leaves, light-brown fur with a cream muzzle.
 Body: a rounded beetle body covered by two glossy hard wing-case shells, pebble-grey and brown like polished stone.
 Arms (front limbs): a pair of huge long gorilla arms with big fists, mossy dark-green fur with lighter green hands.
 Legs (hind limbs): a pair of long folded grasshopper jumping legs, bright green.
@@ -610,7 +610,7 @@ Vzhled jednotlivých dílů (`{vzhled dílu}`); plné prompty všech 60 karet js
 | `head_wolf` | Hlava sněžného vlka | led | a snow wolf head with pointed ears and small white fangs, frosty pale-blue and white fur |
 | `head_dragon` | Dračí hlava | oheň | a dragon head with two curved golden-orange horns, small fangs and a smoking snout, glossy red scales |
 | `head_robot` | Robotí hlava | blesk | a boxy retro robot head with three round glowing lens eyes and a small bolt antenna, yellow painted metal with grey rivets |
-| `head_deer` | Jelení hlava | rostlina | a gentle deer head with branching antlers sprouting small green leaves, moss-green and light-brown fur |
+| `head_deer` | Jelení hlava | rostlina | a gentle deer head with a long muzzle, a black nose, big pointed ears and branching antlers sprouting small green leaves, light-brown fur with a cream muzzle |
 | `head_spider` | Pavoučí hlava | stín | a fuzzy spider head with eight shiny round eyes and two small fangs, dark purple |
 
 **Trup**
