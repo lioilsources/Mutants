@@ -13,6 +13,7 @@ dependencies:
     path: ../mutant_core
   # Bestiary JSON lives in the app documents directory.
   path_provider: ^2.1.5
+  video_player: ^2.14.1
 
 dev_dependencies:
   flutter_test:

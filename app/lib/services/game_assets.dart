@@ -28,6 +28,14 @@ class ArtIndex {
   String? shadow(String mutantId) =>
       _ifPresent('assets/figures/$mutantId/shadow.webp');
 
+  /// Video clip of a figure (PLAN-KOLEKCE §6.5): `idle`, `assemble`,
+  /// `show_<slot>`, `cheer`. Square H.264 on a grey backdrop.
+  String? clip(String mutantId, String name) =>
+      _ifPresent('assets/figures/$mutantId/clips/$name.mp4');
+
+  /// A figure plays from clips once it has at least an idle loop.
+  bool hasClips(String mutantId) => clip(mutantId, 'idle') != null;
+
   int get cardCount =>
       _assets.where((a) => a.startsWith('assets/cards/')).length;
 

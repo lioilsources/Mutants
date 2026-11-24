@@ -5,6 +5,7 @@ import 'package:mutant_core/mutant_core.dart';
 
 import '../../services/game_assets.dart';
 import '../../theme.dart';
+import 'clip_figure.dart';
 
 enum FigureLook {
   /// Normal colours.
@@ -40,8 +41,9 @@ class FigureController extends ChangeNotifier {
 }
 
 /// The only place that knows how a figure is drawn (PLAN-KOLEKCE §5.3).
-/// Today: [StandeeFigure] – the 2D hero image, or a placeholder toy built
-/// from the recipe's element colours. Clips (M3b) and GLB (M4) plug in here.
+/// [StandeeFigure] – the 2D hero image, or a placeholder toy built from the
+/// recipe's element colours; [ClipFigure] when the figure has video clips
+/// and is big enough to play with (has a controller). GLB (M4) plugs in here.
 class FigureView extends StatelessWidget {
   const FigureView({
     super.key,
@@ -73,6 +75,16 @@ class FigureView extends StatelessWidget {
       controller: controller,
       size: size,
     );
+    if (controller != null &&
+        look != FigureLook.shadow &&
+        art.hasClips(mutant.id)) {
+      figure = ClipFigure(
+        mutantId: mutant.id,
+        size: size,
+        controller: controller,
+        fallback: figure,
+      );
+    }
     figure = switch (look) {
       FigureLook.painted => figure,
       FigureLook.grey => ColorFiltered(
