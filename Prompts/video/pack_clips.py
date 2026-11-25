@@ -138,7 +138,8 @@ def main():
         flags = []
         if clip != "assemble" and loop > args.loop_max:
             flags.append(f"loop {loop:.1f}")
-        if edge > args.edge_max:
+        # Assembly starts from parts spread to the frame edges; skip it.
+        if clip != "assemble" and edge > args.edge_max:
             flags.append(f"camera {edge:.1f}")
         rel = path.relative_to(args.src) if path.is_relative_to(args.src) else path
         row = {"clip": str(rel), "loop": round(loop, 1), "edge": round(edge, 1)}
