@@ -130,8 +130,18 @@ class _RevealOverlayState extends State<RevealOverlay>
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: _phase == RevealPhase.free ? null : _next,
-      child: ColoredBox(
-        color: MutantColors.night.withValues(alpha: 0.94),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: MutantColors.night.withValues(alpha: 0.94),
+          image: switch (GameAssets.instance.art.backdrop('reveal_stage')) {
+            final path? => DecorationImage(
+              image: AssetImage(path),
+              fit: BoxFit.cover,
+              opacity: 0.55,
+            ),
+            null => null,
+          },
+        ),
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, box) {

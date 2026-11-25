@@ -36,6 +36,10 @@ class ArtIndex {
   /// A figure plays from clips once it has at least an idle loop.
   bool hasClips(String mutantId) => clip(mutantId, 'idle') != null;
 
+  /// `assets/backdrops/<name>.webp`: `reveal_stage`, `collection_shelf`,
+  /// `card_back`. Portrait, opaque.
+  String? backdrop(String name) => _ifPresent('assets/backdrops/$name.webp');
+
   int get cardCount =>
       _assets.where((a) => a.startsWith('assets/cards/')).length;
 

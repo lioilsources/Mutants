@@ -55,38 +55,56 @@ class CollectionScreen extends StatelessWidget {
               ),
             ],
           ),
-          body: CustomScrollView(
-            slivers: [
-              _header('Prapředci', text),
-              _grid(context, ancestors),
-              for (final MapEntry(key: origin, value: shelves)
-                  in byOrigin.entries) ...[
-                _header(
-                  'Kříženci – ${engine.catalog.label('origin', origin)}',
-                  text,
-                ),
-                _grid(context, shelves),
-              ],
-              if (progress.oldAttempts.isNotEmpty) ...[
-                _header('Staré pokusy', text),
-                SliverList.separated(
-                  itemCount: progress.oldAttempts.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, i) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: CreatureCard(
-                      record: progress.oldAttempts[i],
-                      catalog: engine.catalog,
-                      names: engine.names,
+          body: _backdrop(
+            child: CustomScrollView(
+              slivers: [
+                _header('Prapředci', text),
+                _grid(context, ancestors),
+                for (final MapEntry(key: origin, value: shelves)
+                    in byOrigin.entries) ...[
+                  _header(
+                    'Kříženci – ${engine.catalog.label('origin', origin)}',
+                    text,
+                  ),
+                  _grid(context, shelves),
+                ],
+                if (progress.oldAttempts.isNotEmpty) ...[
+                  _header('Staré pokusy', text),
+                  SliverList.separated(
+                    itemCount: progress.oldAttempts.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (context, i) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: CreatureCard(
+                        record: progress.oldAttempts[i],
+                        catalog: engine.catalog,
+                        names: engine.names,
+                      ),
                     ),
                   ),
-                ),
+                ],
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
               ],
-              const SliverToBoxAdapter(child: SizedBox(height: 32)),
-            ],
+            ),
           ),
         );
       },
+    );
+  }
+
+  /// The shelf wall behind the grid, dimmed so the tiles stay readable.
+  Widget _backdrop({required Widget child}) {
+    final path = GameAssets.instance.art.backdrop('collection_shelf');
+    if (path == null) return child;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage(path),
+          fit: BoxFit.cover,
+          opacity: 0.3,
+        ),
+      ),
+      child: child,
     );
   }
 

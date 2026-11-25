@@ -50,6 +50,8 @@ flutter:
     - assets/figures/vlkodrak/
     - assets/figures/zralobot/
     - assets/figures/zralotucnak/
+    - assets/backdrops/
+    - assets/cards/
   uses-material-design: true
   fonts:
     # Fredoka (SIL OFL 1.1, assets/fonts/OFL.txt) – variable weight axis.

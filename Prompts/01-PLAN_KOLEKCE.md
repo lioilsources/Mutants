@@ -415,13 +415,13 @@ Každý milník = samostatný commit(y), zelené `dart test`, `dart analyze`, `f
   odmítnutí, kandidáty a stavy sbírky.
 
 **M3 – Grafika 2D** (člověk generuje, Opus zapojuje)
-- [ ] pilot 3 figurky + zmrazení stylu, 60 karet, 28 hero obrázků
-- [ ] import, stíny, kontrola v galerii
+- [x] pilot 3 figurky + zmrazení stylu, 60 karet, 28 hero obrázků
+- [x] import, stíny, kontrola v galerii
 - Hotovo, když: každá karta a každý mutant má obrázek a hra nikde neukazuje zástupnou dlaždici.
 
 **M3b – Video pilot** (člověk generuje a boduje, Opus zapojuje)
 - [ ] 2 figurky × 8 klipů ve Wan i LTX podle `03-WAN_LTX_ANIMACE.md`, vyplněný `Prompts/video/srovnani.csv`
-- [ ] `pack_clips.py`, `ClipFigure`
+- [x] `pack_clips.py`, `ClipFigure`
 - Hotovo, když: je vybraná konfigurace se změřenou cenou použitelného klipu a obě pilotní figurky
   předvádějí pohyby v revealu z klipů.
 
